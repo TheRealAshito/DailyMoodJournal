@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
-import Sidebar from './components/Sidebar'
+import Navbar from './components/Navbar'
 import LoginPage from './components/LoginPage'
 import SignupPage from './components/SignupPage'
 import ResetPasswordPage from './components/ResetPasswordPage'
@@ -13,9 +13,9 @@ import AboutCBT from './components/AboutCBT'
 
 function ProtectedLayout() {
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto p-6 bg-custom">
+    <div className="min-h-screen flex flex-col bg-custom">
+      <Navbar />
+      <main className="flex-1 p-6 max-w-6xl mx-auto w-full">
         <Routes>
           <Route index element={<Calendar />} />
           <Route path="new" element={<EntryForm />} />
