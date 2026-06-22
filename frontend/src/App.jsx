@@ -1,0 +1,63 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
+import Sidebar from './components/Sidebar'
+import LoginPage from './components/LoginPage'
+import SignupPage from './components/SignupPage'
+import ResetPasswordPage from './components/ResetPasswordPage'
+import Calendar from './components/Calendar'
+import EntryForm from './components/EntryForm'
+import Search from './components/Search'
+import Stats from './components/Stats'
+import Settings from './components/Settings'
+import AboutCBT from './components/AboutCBT'
+
+function ProtectedLayout() {
+  return (
+    <div className="flex h-screen">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto p-6 bg-custom">
+        <Routes>
+          <Route index element={<Calendar />} />
+          <Route path="new" element={<EntryForm />} />
+          <Route path="edit/:encodedPath" element={<EntryForm />} />
+          <Route path="search" element={<Search />} />
+          <Route path="stats" element={<Stats />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="about-cbt" element={<AboutCBT />} />
+        </Routes>
+      </main>
+    </div>
+  )
+}
+
+export default function App() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-custom">
+        <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-custom px-4">
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </div>
+    )
+  }
+
+  return (
+    <Routes>
+      <Route path="/*" element={<ProtectedLayout />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
