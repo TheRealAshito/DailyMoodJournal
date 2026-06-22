@@ -1,6 +1,6 @@
-streamlit>=1.36
 cryptography>=42.0
-matplotlib>=3.8
-pandas>=2.1
 PyYAML>=6.0
-bcrypt>=4.0
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9
+numpy>=1.24
