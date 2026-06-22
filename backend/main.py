@@ -1,7 +1,7 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from backend.routers import auth, entries, export, search, stats, settings
 from backend.config import ensure_directories
 
@@ -33,6 +33,21 @@ def health():
     return {"status": "ok"}
 
 
-frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
-if os.path.exists(frontend_dir):
-    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
+
+
+@app.get("/{full_path:path}")
+async def spa_serve(full_path: str):
+    if not os.path.isdir(FRONTEND_DIR):
+        raise HTTPException(404, "Frontend not built")
+
+    file_path = os.path.join(FRONTEND_DIR, full_path)
+
+    if full_path and os.path.isfile(file_path):
+        return FileResponse(file_path)
+
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path, media_type="text/html")
+
+    raise HTTPException(404)
