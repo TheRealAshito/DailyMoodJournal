@@ -37,6 +37,8 @@ MOOD_EMOJIS = {
     6: "\U0001f929",
 }
 
+DATA_VERSION = "1.0"
+
 
 def ensure_directories():
     os.makedirs(ENTRIES_DIR, exist_ok=True)
@@ -58,6 +60,7 @@ def save_users(users: dict):
     ensure_directories()
     with open(USERS_FILE, "w") as f:
         json.dump(users, f, indent=2)
+    os.chmod(USERS_FILE, 0o600)
 
 
 def load_master_key() -> bytes | None:
@@ -74,22 +77,36 @@ def save_master_key(key: bytes):
     os.chmod(MASTER_KEY_FILE, 0o600)
 
 
+AUTH_KEYS = {
+    "salt", "password_hash", "entry_key_encrypted_with_pwd",
+    "entry_key_salt_pwd", "entry_key_encrypted_with_secret",
+    "entry_key_salt_secret", "security_question", "created_at",
+    "theme", "language", "reflection_categories", "cbt_enabled_categories",
+}
+
+KNOWN_SETTINGS = {"theme", "language", "reflection_categories"}
+
+
 def get_user_settings(username: str) -> dict:
     users = load_users()
     user = users.get(username, {})
-    return {
+    settings = {
         "theme": user.get("theme", "light"),
         "language": user.get("language", "en"),
-        "cbt_enabled_categories": user.get("cbt_enabled_categories", ["distortions", "reframing"]),
-        "cbt_show_education": user.get("cbt_show_education", True),
+        "reflection_categories": user.get("reflection_categories",
+            user.get("cbt_enabled_categories",
+                ["self_reflection", "gratitude", "growth_learning", "emotional_awareness"])),
     }
+    for key, value in user.items():
+        if key not in AUTH_KEYS and key not in settings:
+            settings[key] = value
+    return settings
 
 
 def save_user_settings(username: str, settings: dict):
     users = load_users()
     if username not in users:
         return
-    for key in ("theme", "language", "cbt_enabled_categories", "cbt_show_education"):
-        if key in settings:
-            users[username][key] = settings[key]
+    for key, value in settings.items():
+        users[username][key] = value
     save_users(users)

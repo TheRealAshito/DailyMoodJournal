@@ -7,6 +7,89 @@ from backend.crypto import encrypt_entry
 from backend.entry_crud import get_entry
 from backend.utils import list_user_entries, parse_entry_text, build_entry_path, build_entry_text, validate_entry_data
 
+from fpdf import FPDF
+
+
+def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=None) -> bytes | None:
+    entries = list_user_entries(username)
+    if not entries:
+        return None
+
+    from datetime import datetime as dt_parse
+
+    decoded = []
+    for path in entries:
+        entry = get_entry(path, user_key)
+        if entry is None:
+            continue
+
+        if date_from or date_to:
+            try:
+                entry_date_str = entry.get("date", "")
+                entry_dt = dt_parse.strptime(entry_date_str, "%Y-%m-%d %H:%M").date()
+            except (ValueError, TypeError):
+                continue
+            if date_from and entry_dt < date_from:
+                continue
+            if date_to and entry_dt > date_to:
+                continue
+
+        decoded.append(entry)
+
+    if not decoded:
+        return None
+
+    decoded.sort(key=lambda e: e.get("date", ""), reverse=True)
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 22)
+    pdf.cell(0, 12, "DailyMood Journal", align="C", ln=True)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 7, f"User: {username}", align="C", ln=True)
+    pdf.cell(0, 7, f"Exported: {datetime.now().strftime('%B %d, %Y')}", align="C", ln=True)
+    pdf.cell(0, 7, f"Total entries: {len(decoded)}", align="C", ln=True)
+    pdf.ln(8)
+
+    MOOD_LABELS = {0: "Terrible", 1: "Bad", 2: "Poor", 3: "Okay", 4: "Good", 5: "Great", 6: "Amazing"}
+    MOOD_COLORS = {0: (74, 20, 140), 1: (106, 27, 154), 2: (156, 39, 176), 3: (158, 158, 158), 4: (102, 187, 106), 5: (67, 160, 71), 6: (46, 125, 50)}
+
+    for i, entry in enumerate(decoded):
+        if i > 0:
+            pdf.add_page()
+
+        mood = entry.get("mood", 3)
+        color = MOOD_COLORS.get(mood, (158, 158, 158))
+        label = MOOD_LABELS.get(mood, "Unknown")
+
+        header_color = color
+        pdf.set_fill_color(*header_color)
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font("Helvetica", "B", 14)
+        pdf.cell(0, 10, f"  {entry.get('title', 'Untitled')}", fill=True, ln=True)
+
+        pdf.set_text_color(60, 60, 60)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.cell(0, 6, f"  {entry.get('date', '')}  |  Mood: {label} ({mood})", ln=True)
+
+        tags = entry.get("tags", [])
+        if tags:
+            pdf.cell(0, 6, f"  Tags: {', '.join(tags)}", ln=True)
+
+        pdf.ln(3)
+        body = entry.get("body", "")
+        pdf.set_font("Helvetica", "", 10)
+        for line in body.split("\n"):
+            line = line.strip()
+            if not line:
+                pdf.ln(2)
+                continue
+            pdf.multi_cell(0, 5, line)
+
+    return bytes(pdf.output(dest="S"))
+
 
 def build_export_archive(username: str, fmt: str, user_key: bytes) -> bytes | None:
     entries = list_user_entries(username)
@@ -20,23 +103,19 @@ def build_export_archive(username: str, fmt: str, user_key: bytes) -> bytes | No
         if entry is None:
             continue
 
-        dt_str = entry.get("date", "")
+        body = entry.pop("body", "")
+        path_val = entry.pop("path", "")
+
         try:
-            dt = datetime.fromisoformat(dt_str) if isinstance(dt_str, str) else dt_str
-        except ValueError:
+            dt = datetime.strptime(entry.get("date", ""), "%Y-%m-%d %H:%M")
+        except (ValueError, TypeError):
             try:
-                dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
-            except ValueError:
+                dt = datetime.fromisoformat(entry.get("date", ""))
+            except (ValueError, TypeError):
                 continue
 
-        frontmatter = {
-            "title": entry.get("title", ""),
-            "date": dt.strftime("%Y-%m-%d %H:%M"),
-            "mood": entry.get("mood", 3),
-            "tags": entry.get("tags", []),
-            "author": entry.get("author", username),
-        }
-        body = entry.get("body", "")
+        entry["date"] = dt.strftime("%Y-%m-%d %H:%M")
+        frontmatter = dict(entry)
         plaintext = build_entry_text(frontmatter, body)
 
         filename = f"{dt.strftime('%Y-%m-%d_%H%M')}.md"
@@ -165,6 +244,10 @@ def _process_plain_file(text: str, username: str, user_key: bytes, existing_path
         "author": username,
     }
 
+    for key, value in frontmatter.items():
+        if key not in ("title", "date", "mood", "tags", "author", "body"):
+            entry_data[key] = value
+
     errors = validate_entry_data(entry_data)
     if errors:
         return 0, 1
@@ -174,16 +257,19 @@ def _process_plain_file(text: str, username: str, user_key: bytes, existing_path
         return 0, 1
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    plaintext = build_entry_text(
-        {
-            "title": title,
-            "date": dt.strftime("%Y-%m-%d %H:%M"),
-            "mood": mood,
-            "tags": tags,
-            "author": username,
-        },
-        body,
-    )
+
+    frontmatter_out = {
+        "title": title,
+        "date": dt.strftime("%Y-%m-%d %H:%M"),
+        "mood": mood,
+        "tags": tags,
+        "author": username,
+    }
+    for key, value in frontmatter.items():
+        if key not in frontmatter_out:
+            frontmatter_out[key] = value
+
+    plaintext = build_entry_text(frontmatter_out, body)
     ciphertext = encrypt_entry(plaintext, user_key)
     with open(path, "wb") as f:
         f.write(ciphertext)

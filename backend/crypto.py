@@ -1,5 +1,3 @@
-import os
-import json
 import secrets
 from base64 import b64encode, b64decode
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM

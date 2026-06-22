@@ -1,7 +1,17 @@
 import os
 from datetime import datetime
 from backend.crypto import encrypt_entry, decrypt_entry
-from backend.utils import build_entry_path, parse_entry_text, build_entry_text, list_user_entries
+from backend.utils import build_entry_path, parse_entry_text, build_entry_text, list_user_entries, extract_date_from_path
+
+KNOWN_FIELDS = {"title", "date", "mood", "tags", "author", "body", "path"}
+
+
+def _merge_frontmatter(known: dict, extra: dict) -> dict:
+    result = dict(known)
+    for key, value in extra.items():
+        if key not in KNOWN_FIELDS and key not in result:
+            result[key] = value
+    return result
 
 
 def create_entry(username: str, entry_data: dict, user_key: bytes) -> str:
@@ -19,6 +29,9 @@ def create_entry(username: str, entry_data: dict, user_key: bytes) -> str:
         "tags": entry_data.get("tags", []),
         "author": username,
     }
+    extra = {k: v for k, v in entry_data.items() if k not in KNOWN_FIELDS and k not in frontmatter}
+    frontmatter = _merge_frontmatter(frontmatter, extra)
+
     body = entry_data.get("body", "")
     plaintext = build_entry_text(frontmatter, body)
     ciphertext = encrypt_entry(plaintext, user_key)
@@ -45,6 +58,7 @@ def get_entry(path: str, user_key: bytes) -> dict | None:
 
 
 def update_entry(path: str, entry_data: dict, user_key: bytes) -> str:
+    existing = get_entry(path, user_key)
     dt = entry_data["date"]
     if isinstance(dt, str):
         dt = datetime.fromisoformat(dt)
@@ -58,6 +72,13 @@ def update_entry(path: str, entry_data: dict, user_key: bytes) -> str:
         "tags": entry_data.get("tags", []),
         "author": entry_data.get("author", ""),
     }
+    extra = {k: v for k, v in entry_data.items() if k not in KNOWN_FIELDS and k not in frontmatter}
+    if existing:
+        for key, value in existing.items():
+            if key not in KNOWN_FIELDS and key not in frontmatter and key not in extra:
+                extra[key] = value
+    frontmatter = _merge_frontmatter(frontmatter, extra)
+
     body = entry_data.get("body", "")
     plaintext = build_entry_text(frontmatter, body)
     ciphertext = encrypt_entry(plaintext, user_key)
@@ -78,7 +99,6 @@ def delete_entry(path: str) -> bool:
 def get_entries_for_date(username: str, date_obj, user_key: bytes) -> list[dict]:
     entries = []
     for path in list_user_entries(username):
-        from backend.utils import extract_date_from_path
         entry_date = extract_date_from_path(path)
         if entry_date and entry_date.date() == date_obj:
             entries.append({"path": path, "date": entry_date})

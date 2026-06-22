@@ -44,21 +44,19 @@ def parse_entry_text(text: str) -> tuple[dict, str]:
 
 
 def build_entry_text(frontmatter: dict, body: str) -> str:
-    lines = ["---"]
-    from datetime import datetime, date
+    clean = {}
     for key, value in frontmatter.items():
-        if isinstance(value, datetime):
-            value = value.strftime("%Y-%m-%d %H:%M")
-        elif isinstance(value, date):
-            value = value.strftime("%Y-%m-%d")
-        elif isinstance(value, list):
-            lines.append(f"{key}: [{', '.join(repr(v) for v in value)}]")
+        if key == "body":
             continue
-        lines.append(f"{key}: {value}")
-    lines.append("---")
-    lines.append("")
-    lines.append(body)
-    return "\n".join(lines)
+        if isinstance(value, datetime):
+            clean[key] = value.strftime("%Y-%m-%d %H:%M")
+        elif isinstance(value, bytes):
+            continue
+        else:
+            clean[key] = value
+
+    header = yaml.dump(clean, default_flow_style=False, allow_unicode=True).strip()
+    return f"---\n{header}\n---\n\n{body}"
 
 
 def extract_date_from_path(path: str) -> datetime | None:

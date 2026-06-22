@@ -4,7 +4,7 @@ from threading import Lock
 
 
 class SessionStore:
-    def __init__(self, ttl_seconds: int = 3600):
+    def __init__(self, ttl_seconds: int = 86400):
         self._store: dict[str, dict] = {}
         self._ttl = ttl_seconds
         self._lock = Lock()
