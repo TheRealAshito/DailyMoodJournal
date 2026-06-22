@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, date
-from fastapi import APIRouter, Request, HTTPException, UploadFile
+from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from backend.entry_crud import (
     create_entry,
