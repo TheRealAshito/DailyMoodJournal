@@ -1,4 +1,4 @@
-const MOOD_EMOJIS = ['\U0001f61e', '\U0001f622', '\U0001f615', '\U0001f610', '\U0001f642', '\U0001f60a', '\U0001f929']
+const MOOD_EMOJIS = ['\u{1F61E}', '\u{1F622}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F60A}', '\u{1F929}']
 const MOOD_LABELS = ['Terrible', 'Bad', 'Poor', 'Okay', 'Good', 'Great', 'Amazing']
 
 export default function MoodSlider({ value, onChange, disabled }) {
