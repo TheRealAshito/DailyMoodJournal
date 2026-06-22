@@ -4,58 +4,31 @@ import api from '../api'
 import { useI18n } from '../i18n'
 import MoodSlider from './MoodSlider'
 
-const COGNITIVE_DISTORTIONS = {
-  catastrophizing: { name: 'Catastrophizing', description: 'Expecting the worst-case scenario to happen, even when there is little evidence.' },
-  black_and_white: { name: 'Black-and-White Thinking', description: 'Seeing situations in only two categories instead of on a spectrum.' },
-  overgeneralization: { name: 'Overgeneralization', description: 'Taking a single negative event and seeing it as a never-ending pattern.' },
-  mental_filter: { name: 'Mental Filtering', description: 'Dwelling exclusively on one negative detail while ignoring positives.' },
-  mind_reading: { name: 'Mind Reading', description: 'Assuming you know what others are thinking without evidence.' },
-  fortune_telling: { name: 'Fortune Telling', description: 'Predicting a negative outcome will happen as if it were a fact.' },
-  emotional_reasoning: { name: 'Emotional Reasoning', description: 'Believing that because you feel a certain way, it must be true.' },
-  labeling: { name: 'Labeling', description: 'Attaching a global negative label to yourself or others.' },
-  personalization: { name: 'Personalization', description: 'Taking responsibility for events not entirely under your control.' },
-  should_statements: { name: '"Should" Statements', description: 'Holding yourself to rigid rules about how you or others "should" behave.' },
-}
-
-const CBT_PROMPTS = {
-  distortions: [
-    'Which cognitive distortion might be at play here?',
-    'What would you say to a close friend who had this exact thought?',
-    'What evidence contradicts this belief?',
-    'Are you treating a feeling as if it were a fact?',
-  ],
-  gratitude: [
-    'What went well today, even if small?',
-    'What are you grateful for right now?',
-    'What skill or strength did you use today?',
-  ],
-  reframing: [
-    'How might this look different a month from now?',
-    'What can you learn from this experience?',
-    'What would your compassionate self say?',
-  ],
-}
-
-function getRandomPrompt(category) {
-  const prompts = CBT_PROMPTS[category] || CBT_PROMPTS.distortions
-  return prompts[Math.floor(Math.random() * prompts.length)]
+const PROMPT_CATEGORIES = {
+  self_reflection: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  gratitude: [0, 1, 2, 3, 4, 5, 6, 7],
+  growth_learning: [0, 1, 2, 3, 4, 5, 6, 7],
+  emotional_awareness: [0, 1, 2, 3, 4, 5, 6, 7],
+  relationships: [0, 1, 2, 3, 4, 5, 6, 7],
+  goals_purpose: [0, 1, 2, 3, 4, 5, 6, 7],
+  mindfulness: [0, 1, 2, 3, 4, 5, 6, 7],
+  resilience: [0, 1, 2, 3, 4, 5, 6, 7],
 }
 
 export default function EntryForm() {
   const { t } = useI18n()
   const { encodedPath } = useParams()
   const navigate = useNavigate()
-  const [settings, setSettings] = useState({ cbt_enabled_categories: ['distortions', 'reframing'], cbt_show_education: true })
+  const [settings, setSettings] = useState({ reflection_categories: ['self_reflection', 'gratitude', 'growth_learning', 'emotional_awareness'] })
   const [title, setTitle] = useState('')
   const [mood, setMood] = useState(3)
   const [tags, setTags] = useState('')
   const [body, setBody] = useState('')
   const [edate, setEdate] = useState(new Date().toISOString().slice(0, 10))
   const [etime, setEtime] = useState(new Date().toTimeString().slice(0, 5))
-  const [includeCBT, setIncludeCBT] = useState(false)
-  const [cbtPrompts, setCbtPrompts] = useState([])
-  const [cbtResponses, setCbtResponses] = useState([])
-  const [distortion, setDistortion] = useState(null)
+  const [includePrompts, setIncludePrompts] = useState(false)
+  const [prompts, setPrompts] = useState([])
+  const [responses, setResponses] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(!!encodedPath)
@@ -90,20 +63,18 @@ export default function EntryForm() {
       .finally(() => setFetching(false))
   }, [encodedPath, isEditing])
 
-  function toggleCBT() {
-    if (!includeCBT) {
-      const distortions = Object.values(COGNITIVE_DISTORTIONS)
-      const randomDist = distortions[Math.floor(Math.random() * distortions.length)]
-      setDistortion(randomDist)
-      const categories = settings.cbt_enabled_categories || ['distortions', 'reframing']
-      const prompts = categories.map((cat) => ({
-        category: cat,
-        text: getRandomPrompt(cat),
-      }))
-      setCbtPrompts(prompts)
-      setCbtResponses(prompts.map(() => ''))
+  function togglePrompts() {
+    if (!includePrompts) {
+      const cats = settings.reflection_categories || ['self_reflection', 'gratitude', 'growth_learning', 'emotional_awareness']
+      const prompts = cats.map((cat) => {
+        const pool = PROMPT_CATEGORIES[cat] || PROMPT_CATEGORIES.self_reflection
+        const idx = pool[Math.floor(Math.random() * pool.length)]
+        return { category: cat, key: `prompt_${cat}_${idx}` }
+      })
+      setPrompts(prompts)
+      setResponses(prompts.map(() => ''))
     }
-    setIncludeCBT(!includeCBT)
+    setIncludePrompts(!includePrompts)
   }
 
   async function handleSubmit(e) {
@@ -116,18 +87,17 @@ export default function EntryForm() {
     const dateTime = `${edate}T${etime}:00`
 
     let fullBody = body
-    if (includeCBT && cbtPrompts.length > 0) {
+    if (includePrompts && prompts.length > 0) {
       const lines = []
-      lines.push('## CBT Reflection')
-      lines.push(`**Distortion**: ${distortion?.name || ''}`)
-      cbtPrompts.forEach((p, i) => {
+      lines.push('## Reflection')
+      prompts.forEach((p, i) => {
         lines.push('')
-        lines.push(`**Prompt**: ${p.text}`)
-        lines.push(`**Response**: ${cbtResponses[i] || ''}`)
+        lines.push(`**${t(p.key)}**`)
+        lines.push(`${responses[i] || ''}`)
       })
       lines.push('')
       lines.push('---')
-      fullBody = lines.join('\\n') + '\\n\\n' + fullBody
+      fullBody = lines.join('\n') + '\n\n' + fullBody
     }
 
     const payload = { title: title.trim(), date: dateTime, mood, tags: tagList, body: fullBody }
@@ -183,30 +153,29 @@ export default function EntryForm() {
 
         <div>
           <label className="flex items-center gap-2 text-sm font-medium mb-2 cursor-pointer">
-            <input type="checkbox" checked={includeCBT} onChange={toggleCBT} className="w-4 h-4 accent-purple-600" />
-            {t('include_cbt')}
+            <input type="checkbox" checked={includePrompts} onChange={togglePrompts} className="w-4 h-4 accent-purple-600" />
+            {t('include_reflection')}
           </label>
 
-          {includeCBT && distortion && (
-            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4 mb-4 text-sm">
-              <p className="font-semibold text-purple-700 dark:text-purple-300">Cognitive Distortion — {distortion.name}</p>
-              <p className="text-custom-muted mt-1">{distortion.description}</p>
+          {includePrompts && (
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 mb-4 text-sm">
+              <p className="font-medium text-indigo-700 dark:text-indigo-300">{t('reflection_tip')}</p>
             </div>
           )}
 
-          {includeCBT && cbtPrompts.map((p, i) => (
+          {includePrompts && prompts.map((p, i) => (
             <div key={i} className="mb-3">
-              <p className="text-sm font-medium text-purple-600 mb-1">{p.text}</p>
+              <p className="text-sm font-medium text-indigo-600 mb-1">{t(p.key)}</p>
               <textarea
-                value={cbtResponses[i]}
+                value={responses[i]}
                 onChange={(e) => {
-                  const copy = [...cbtResponses]
+                  const copy = [...responses]
                   copy[i] = e.target.value
-                  setCbtResponses(copy)
+                  setResponses(copy)
                 }}
                 rows={2}
-                placeholder="Write your response here..."
-                className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                placeholder={t('reflection_placeholder')}
+                className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
             </div>
           ))}

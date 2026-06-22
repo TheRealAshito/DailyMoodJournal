@@ -115,18 +115,11 @@ export default function Calendar() {
               <button
                 key={`day-${day}`}
                 onClick={() => setSelectedDate(dateKey)}
-                className={`calendar-cell aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-medium transition-all ${
-                  isSelected ? 'ring-2 ring-purple-500 ring-offset-1 dark:ring-offset-gray-800' : ''
-                }`}
+                className={`calendar-cell aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-medium transition-all ${isSelected ? 'ring-2 ring-purple-500 ring-offset-1 dark:ring-offset-gray-800' : ''}`}
                 style={{ backgroundColor: mood !== null ? color : undefined }}
-                title={`${dateKey}${mood !== null ? ` — Mood: ${mood}` : ''}`}
               >
-                <span className={mood !== null || isToday ? 'text-white drop-shadow-md' : 'text-custom'}>
-                  {day}
-                </span>
-                {isToday && !mood && (
-                  <div className="w-1 h-1 rounded-full bg-purple-600 mt-0.5" />
-                )}
+                <span className={mood !== null || isToday ? 'text-white drop-shadow-md' : 'text-custom'}>{day}</span>
+                {isToday && !mood && <div className="w-1 h-1 rounded-full bg-purple-600 mt-0.5" />}
               </button>
             )
           })}
@@ -135,19 +128,12 @@ export default function Calendar() {
 
       <div className="flex flex-wrap gap-2 mb-6">
         {MOOD_COLORS.map((color, i) => (
-          <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-white" style={{ backgroundColor: color }}>
-            {i}
-          </span>
+          <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-white" style={{ backgroundColor: color }}>{i}</span>
         ))}
       </div>
 
       <div className="mb-4">
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-        />
+        <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" />
       </div>
 
       <h3 className="font-semibold mb-3">{t('entries_for')} {selectedDate}</h3>

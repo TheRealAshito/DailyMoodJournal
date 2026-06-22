@@ -20,13 +20,12 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function Stats() {
   const { t } = useI18n()
   const [stats, setStats] = useState(null)
-  const [period, setPeriod] = useState('30d')
 
   useEffect(() => {
-    api.get(`/stats?period=${period}`)
+    api.get('/stats')
       .then((r) => setStats(r.data))
       .catch(() => {})
-  }, [period])
+  }, [])
 
   if (!stats) {
     return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>

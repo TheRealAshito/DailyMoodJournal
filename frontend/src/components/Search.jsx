@@ -41,16 +41,8 @@ export default function Search() {
             {allTags.map((tag) => (
               <button
                 key={tag}
-                onClick={() => {
-                  setSelectedTags((prev) =>
-                    prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-                  )
-                }}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  selectedTags.includes(tag)
-                    ? 'bg-purple-600 text-white'
-                    : 'card-bg border border-custom text-custom'
-                }`}
+                onClick={() => setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTags.includes(tag) ? 'bg-purple-600 text-white' : 'card-bg border border-custom text-custom'}`}
               >
                 {tag}
               </button>
@@ -61,17 +53,15 @@ export default function Search() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">{t('date_range')} — from</label>
-            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">{t('date_range')} — to</label>
-            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom" />
           </div>
         </div>
 
-        <button onClick={handleSearch} className="w-full py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
-          {t('search')}
-        </button>
+        <button onClick={handleSearch} className="w-full py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700">{t('search')}</button>
       </div>
 
       {searched && (

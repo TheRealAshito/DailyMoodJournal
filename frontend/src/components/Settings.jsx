@@ -4,9 +4,14 @@ import { useI18n } from '../i18n'
 import { useTheme } from '../contexts/ThemeContext'
 
 const CATEGORIES = [
-  { key: 'distortions', label: 'Cognitive Distortions' },
+  { key: 'self_reflection', label: 'Self-Reflection' },
   { key: 'gratitude', label: 'Gratitude' },
-  { key: 'reframing', label: 'Reframing' },
+  { key: 'growth_learning', label: 'Growth & Learning' },
+  { key: 'emotional_awareness', label: 'Emotional Awareness' },
+  { key: 'relationships', label: 'Relationships' },
+  { key: 'goals_purpose', label: 'Goals & Purpose' },
+  { key: 'mindfulness', label: 'Mindfulness' },
+  { key: 'resilience', label: 'Resilience' },
 ]
 
 export default function Settings() {
@@ -19,6 +24,8 @@ export default function Settings() {
   const [pwMsg, setPwMsg] = useState('')
   const [exportFmt, setExportFmt] = useState('tar.gz')
   const [impMsg, setImpMsg] = useState('')
+  const [pdfFrom, setPdfFrom] = useState('')
+  const [pdfTo, setPdfTo] = useState('')
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -50,6 +57,22 @@ export default function Settings() {
     }
   }
 
+  async function handleExportPDF() {
+    try {
+      let url = '/export/pdf?'
+      if (pdfFrom) url += `from_date=${pdfFrom}&`
+      if (pdfTo) url += `to_date=${pdfTo}&`
+      const r = await api.get(url, { responseType: 'blob' })
+      const blob = new Blob([r.data], { type: 'application/pdf' })
+      const obj = window.URL.createObjectURL(blob)
+      const a = document.createElement('a'); a.href = obj
+      a.download = 'dailymood_journal.pdf'
+      a.click(); window.URL.revokeObjectURL(obj)
+    } catch {
+      alert('PDF export failed.')
+    }
+  }
+
   async function handleImport() {
     setImpMsg('')
     const files = fileRef.current?.files
@@ -64,13 +87,13 @@ export default function Settings() {
     }
   }
 
-  function updateCbt(cat) {
+  function updateCategory(cat) {
     if (!settings) return
-    const cats = settings.cbt_enabled_categories || []
+    const cats = settings.reflection_categories || []
     const updated = cats.includes(cat) ? cats.filter((c) => c !== cat) : [...cats, cat]
-    const newS = { ...settings, cbt_enabled_categories: updated }
+    const newS = { ...settings, reflection_categories: updated }
     setSettings(newS)
-    api.put('/settings', { cbt_enabled_categories: updated }).catch(() => {})
+    api.put('/settings', { reflection_categories: updated }).catch(() => {})
   }
 
   if (!settings) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
@@ -90,23 +113,26 @@ export default function Settings() {
         <div className="card-bg border border-custom rounded-xl p-5">
           <h3 className="font-semibold mb-3">{t('language')}</h3>
           <div className="flex gap-2">
-            <button onClick={() => changeLocale('en')} className={`px-4 py-2 rounded-lg text-sm font-medium ${settings.language === 'en' ? 'bg-purple-600 text-white' : 'border-custom bg-custom-secondary text-custom'}`}>
-              English
-            </button>
-            <button onClick={() => changeLocale('pt-BR')} className={`px-4 py-2 rounded-lg text-sm font-medium ${settings.language === 'pt-BR' ? 'bg-purple-600 text-white' : 'border-custom bg-custom-secondary text-custom'}`}>
-              Português
-            </button>
+            {['en', 'pt-BR'].map((lang) => (
+              <button
+                key={lang}
+                onClick={() => changeLocale(lang)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${settings.language === lang ? 'bg-purple-600 text-white' : 'border-custom bg-custom-secondary text-custom'}`}
+              >
+                {lang === 'en' ? 'English' : 'Português'}
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="card-bg border border-custom rounded-xl p-5">
-          <h3 className="font-semibold mb-3">{t('cbt_prompts')}</h3>
-          <p className="text-sm text-custom-muted mb-3">Choose which prompt categories appear when CBT is enabled on an entry.</p>
+          <h3 className="font-semibold mb-3">{t('reflection_categories')}</h3>
+          <p className="text-sm text-custom-muted mb-3">Choose which prompt categories appear when you enable reflection prompts on an entry.</p>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => {
-              const active = (settings.cbt_enabled_categories || []).includes(cat.key)
+              const active = (settings.reflection_categories || []).includes(cat.key)
               return (
-                <button key={cat.key} onClick={() => updateCbt(cat.key)} className={`px-3 py-1.5 rounded-full text-sm font-medium ${active ? 'bg-purple-600 text-white' : 'border-custom bg-custom-secondary text-custom'}`}>
+                <button key={cat.key} onClick={() => updateCategory(cat.key)} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${active ? 'bg-purple-600 text-white' : 'border border-custom text-custom'}`}>
                   {cat.label}
                 </button>
               )
@@ -123,6 +149,23 @@ export default function Settings() {
             </select>
             <button onClick={handleExport} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">{t('build_export')}</button>
           </div>
+        </div>
+
+        <div className="card-bg border border-custom rounded-xl p-5">
+          <h3 className="font-semibold mb-3">📄 {t('export_pdf')}</h3>
+          <p className="text-sm text-custom-muted mb-3">{t('export_pdf_desc')}</p>
+          <div className="flex gap-3 mb-3 items-end">
+            <div>
+              <label className="block text-xs text-custom-muted mb-1">{t('pdf_date_from')}</label>
+              <input type="date" value={pdfFrom} onChange={(e) => setPdfFrom(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            </div>
+            <div>
+              <label className="block text-xs text-custom-muted mb-1">{t('pdf_date_to')}</label>
+              <input type="date" value={pdfTo} onChange={(e) => setPdfTo(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            </div>
+            <div className="text-xs text-custom-muted pb-2">{t('pdf_all_entries')}</div>
+          </div>
+          <button onClick={handleExportPDF} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">{t('export_pdf_btn')}</button>
         </div>
 
         <div className="card-bg border border-custom rounded-xl p-5">
