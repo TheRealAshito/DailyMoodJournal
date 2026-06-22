@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, HTTPException, Response, Request
 from pydantic import BaseModel
 from datetime import datetime
@@ -16,6 +17,7 @@ from backend.sessions import session_store
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+_SANE_USERNAME = re.compile(r"^[a-zA-Z0-9_\-\.]{2,32}$")
 SESSION_COOKIE = "dailymood_session"
 
 
@@ -48,6 +50,21 @@ class SignupRequest(BaseModel):
     security_answer: str
 
 
+class ResetUsernameRequest(BaseModel):
+    username: str
+
+
+class ResetAnswerRequest(BaseModel):
+    username: str
+    answer: str
+
+
+class ResetCompleteRequest(BaseModel):
+    username: str
+    token: str
+    new_password: str
+
+
 class PasswordChangeRequest(BaseModel):
     old_password: str
     new_password: str
@@ -76,7 +93,7 @@ def login(body: LoginRequest, response: Response):
     kek = derive_kek(body.password, b64decode(user_data["entry_key_salt_pwd"].encode()))
     user_key = unwrap_user_key(user_data["entry_key_encrypted_with_pwd"], kek)
     if user_key is None:
-        raise HTTPException(500, "Failed to decrypt encryption key")
+        raise HTTPException(401, "Invalid credentials")
 
     sid = session_store.create(body.username, user_key)
     _set_session_cookie(response, sid)
@@ -91,6 +108,8 @@ def login(body: LoginRequest, response: Response):
 def signup(body: SignupRequest, response: Response):
     if not body.username.strip():
         raise HTTPException(400, "Username is required")
+    if not _SANE_USERNAME.match(body.username):
+        raise HTTPException(400, "Username must be 2-32 characters: letters, numbers, hyphens, dots, underscores")
     if len(body.password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
     if not body.security_answer.strip():
@@ -125,8 +144,7 @@ def signup(body: SignupRequest, response: Response):
         "security_question": body.security_question,
         "theme": "light",
         "language": "en",
-        "cbt_enabled_categories": ["distortions", "reframing"],
-        "cbt_show_education": True,
+        "reflection_categories": ["self_reflection", "gratitude", "growth_learning", "emotional_awareness"],
     }
     save_users(users)
 
@@ -149,7 +167,7 @@ def logout(response: Response, request: Request):
 
 
 @router.post("/password-reset-request")
-def reset_request(body: LoginRequest):
+def reset_request(body: ResetUsernameRequest):
     users = load_users()
     if body.username not in users:
         return {"question": None}
@@ -157,25 +175,19 @@ def reset_request(body: LoginRequest):
 
 
 @router.post("/password-reset-verify")
-def reset_verify(body: LoginRequest):
+def reset_verify(body: ResetAnswerRequest):
     users = load_users()
     if body.username not in users:
         raise HTTPException(404, "User not found")
     user_data = users[body.username]
     secret_salt = b64decode(user_data["entry_key_salt_secret"].encode())
-    kek_secret = derive_kek(body.password, secret_salt)
+    kek_secret = derive_kek(body.answer, secret_salt)
     user_key = unwrap_user_key(user_data["entry_key_encrypted_with_secret"], kek_secret)
     if user_key is None:
         raise HTTPException(401, "Incorrect answer")
 
     reset_sid = session_store.create(body.username, user_key)
     return {"token": reset_sid}
-
-
-class ResetCompleteRequest(BaseModel):
-    username: str
-    token: str
-    new_password: str
 
 
 @router.post("/password-reset-complete")

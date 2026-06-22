@@ -12,10 +12,22 @@ from backend.entry_crud import (
     get_all_tags_for_user,
 )
 from backend.utils import extract_date_from_path
-from backend.config import MOOD_COLORS, MOOD_LABELS
+from backend.config import MOOD_COLORS, MOOD_LABELS, ENTRIES_DIR
 from backend.routers.auth import _get_session
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
+
+
+def _resolve_entry_path(path: str, username: str) -> str:
+    if not os.path.isabs(path):
+        path = os.path.join(ENTRIES_DIR, username, path)
+    resolved = os.path.normpath(os.path.realpath(path))
+    user_dir = os.path.normpath(os.path.realpath(os.path.join(ENTRIES_DIR, username)))
+    if not resolved.startswith(user_dir + os.sep) and resolved != user_dir:
+        raise HTTPException(403, "Forbidden")
+    if not resolved.endswith(".enc"):
+        raise HTTPException(400, "Invalid file type")
+    return resolved
 
 
 class EntryCreate(BaseModel):
@@ -131,10 +143,7 @@ def read_entry(request: Request, path: str):
     if session is None:
         raise HTTPException(401, "Not authenticated")
 
-    full_path = path
-    if not os.path.isabs(full_path):
-        raise HTTPException(404, "Invalid path")
-
+    full_path = _resolve_entry_path(path, session["username"])
     entry = get_entry(full_path, session["user_key"])
     if entry is None:
         raise HTTPException(404, "Entry not found")
@@ -150,6 +159,7 @@ def edit_entry(request: Request, path: str, body: EntryUpdate):
     if body.mood < 0 or body.mood > 6:
         raise HTTPException(400, "Mood must be between 0 and 6")
 
+    full_path = _resolve_entry_path(path, session["username"])
     entry_data = {
         "title": body.title,
         "date": body.date,
@@ -158,8 +168,8 @@ def edit_entry(request: Request, path: str, body: EntryUpdate):
         "body": body.body,
         "author": session["username"],
     }
-    update_entry(path, entry_data, session["user_key"])
-    entry = get_entry(path, session["user_key"])
+    update_entry(full_path, entry_data, session["user_key"])
+    entry = get_entry(full_path, session["user_key"])
     return _format_entry(entry) if entry else {"status": "ok"}
 
 
@@ -169,5 +179,6 @@ def remove_entry(request: Request, path: str):
     if session is None:
         raise HTTPException(401, "Not authenticated")
 
-    delete_entry(path)
+    full_path = _resolve_entry_path(path, session["username"])
+    delete_entry(full_path)
     return {"status": "ok"}
