@@ -1,0 +1,6 @@
+streamlit>=1.36
+cryptography>=42.0
+matplotlib>=3.8
+pandas>=2.1
+PyYAML>=6.0
+bcrypt>=4.0
