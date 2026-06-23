@@ -4,173 +4,209 @@
 | Layer | Choice | Rationale |
 |-------|--------|-----------|
 | Language | Python 3.11+ | Ubiquitous in homelabs, easy to maintain |
-| Web framework | Streamlit | Minimal boilerplate, built-in theming, responsive |
+| Backend framework | FastAPI | Modern async Python, built-in validation, OpenAPI docs |
+| Frontend framework | React 18 + Vite + Tailwind CSS | Full UI control, professional look, fast HMR |
+| Charts | recharts | React-native charting, interactive, no server-side render |
 | Data storage | Encrypted `.enc` files | AES-256-GCM, user owns the raw key material |
 | Auth storage | JSON file (`data/users.json`) | Single file, easy to back up, fields are hashed/encrypted |
-| Charts | Matplotlib | Lightweight, sufficient for bar charts and heatmaps |
-| Encryption | `cryptography` library (AES-GCM, PBKDF2) | Industry standard, audited, pure Python |
-| Archive | Python `tarfile` + `zipfile` | Standard library, no extra deps |
-| Calendar heatmap | Custom matplotlib grid rendered to image | No external JS, full control over look |
+| Encryption | `cryptography` library (AES-GCM, PBKDF2) | Industry standard, audited |
+| PDF generation | fpdf2 | Pure Python, no external dependencies |
+| Archive | Python `tarfile` + `zipfile` | Standard library |
+| Sessions | In-memory dict (server-side, 24h TTL) | Session ID via HTTP-only cookie, UEK never touches frontend |
+| i18n | JSON locale files | `en.json` + `pt-BR.json` loaded by React context |
+| Deployment | Docker multi-stage | Builds React static files, serves via uvicorn |
 
 ## Project Structure
 ```
 DailyMoodJournal/
-├── app.py                    # Streamlit entry point, page router, session state init
-├── auth.py                   # Login, signup, logout, password reset, session guard
-├── crypto.py                 # All encryption: AES-GCM, PBKDF2, key wrap/unwrap
-├── entry_crud.py             # CRUD operations on encrypted .enc entry files
-├── export_import.py          # Export (decrypt -> archive), Import (archive/md -> encrypt)
-├── config.py                 # App paths, first-run setup, theme defaults
-├── ui/
-│   ├── calendar.py           # Calendar heatmap rendering + date picker + entry list
-│   ├── entry_form.py         # New/edit entry widget (with optional CBT prompts)
-│   ├── stats.py              # Streaks, mood chart, entry counts, bar chart
-│   └── search.py             # Tag + date filter UI, entry list
-│   └── settings.py           # Profile, password change, theme toggle, export/import
-├── prompts/
-│   ├── __init__.py
-│   └── cbt_prompts.py        # Cognitive distortion definitions + prompt banks
-├── utils.py                  # Path builders, validators, frontmatter parser
-├── entries/                  # Created at first run — encrypted entry files live here
+├── backend/                  # FastAPI Python backend
+│   ├── main.py              # App entry, CORS, SPA catch-all route
+│   ├── sessions.py          # In-memory session store (24h TTL)
+│   ├── routers/
+│   │   ├── auth.py          # Login, signup, password reset, /me, change password
+│   │   ├── entries.py       # CRUD /entries, /day/{date}, /tags, path traversal protection
+│   │   ├── search.py        # /search?tags=&from_date=&to_date=
+│   │   ├── stats.py         # /stats (streaks, mood data, distribution)
+│   │   ├── settings.py      # /settings (theme, lang, reflection categories)
+│   │   └── export.py        # /export (archive), /export/pdf (PDF), /export/import
+│   ├── crypto.py            # AES-256-GCM, PBKDF2 600K, key wrap/unwrap
+│   ├── entry_crud.py        # CRUD on encrypted .enc files (preserves unknown fields)
+│   ├── export_import.py     # Build archives, PDF export (fpdf2), process imports
+│   ├── utils.py             # Path builders, YAML frontmatter (via PyYAML)
+│   ├── config.py            # Paths, user I/O, settings migration, mood maps
+│   └── prompts/
+│       └── cbt_prompts.py   # 12 cognitive distortions + 30 CBT prompts
+├── frontend/                # React SPA (Vite + Tailwind)
+│   ├── public/locales/
+│   │   ├── en.json          # English translations (UI + 64 reflection prompts)
+│   │   └── pt-BR.json       # Brazilian Portuguese translations
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── LoginPage.jsx / SignupPage.jsx / ResetPasswordPage.jsx
+│   │   │   ├── Navbar.jsx   # Top nav bar + theme toggle + language switcher
+│   │   │   ├── Calendar.jsx # Mood-colored month grid + date picker + entries
+│   │   │   ├── EntryForm.jsx # New/edit entry + mood emojis + reflection prompts
+│   │   │   ├── EntryCard.jsx # Read-only entry with edit/delete buttons
+│   │   │   ├── MoodSlider.jsx # Emoji-based mood selector (0-6) using String.fromCodePoint
+│   │   │   ├── Search.jsx   # Tag + date range filter with results
+│   │   │   ├── Stats.jsx    # recharts bar charts, streak counters, distribution
+│   │   │   ├── Settings.jsx # Theme, language, reflection categories, export/import, PDF, password
+│   │   │   └── AboutCBT.jsx # 12 cognitive distortions with examples
+│   │   ├── contexts/
+│   │   │   ├── AuthContext.jsx # login, signup, logout, session restore
+│   │   │   └── ThemeContext.jsx # dark/light via Tailwind class
+│   │   ├── api.js           # Axios instance (withCredentials: true)
+│   │   ├── i18n.jsx         # Translation hook + locale loader with caching
+│   │   ├── App.jsx          # Router + auth guard + protected layout
+│   │   └── main.jsx         # React entry (StrictMode)
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js       # Dev proxy /api → localhost:8501
+│   ├── tailwind.config.js   # Custom mood color palette
+│   └── postcss.config.js
+├── entries/                 # Created at runtime — encrypted .enc files
 ├── data/
-│   ├── users.json            # User credentials (hashed passwords, wrapped keys)
-│   └── master.key            # Auto-generated Fernet key for security Q&A (first run)
-├── Dockerfile
+│   ├── users.json           # User credentials + settings (0o600)
+│   └── master.key           # Auto-generated Fernet key (0o600)
+├── Dockerfile               # Multi-stage (Node build → Python serve)
 ├── docker-compose.yml
-├── .dockerignore
 ├── .gitignore
-├── .streamlit/
-│   └── config.toml           # Streamlit server config (port, theme defaults)
-└── requirements.txt
+├── .dockerignore
+├── requirements.txt
+├── goal.md
+└── architecture.md
 ```
 
-## Data Model
+## API Endpoints
 
-### Entry (encrypted on disk)
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/health` | Server health check |
+| GET | `/api/auth/me` | Current user info + settings |
+| POST | `/api/auth/login` | Login, sets session cookie |
+| POST | `/api/auth/signup` | Create account + auto-login |
+| POST | `/api/auth/logout` | Clear session |
+| POST | `/api/auth/password-reset-request` | Get security question |
+| POST | `/api/auth/password-reset-verify` | Verify answer, get reset token |
+| POST | `/api/auth/password-reset-complete` | Set new password |
+| PUT | `/api/auth/password` | Change password (authenticated) |
+| GET | `/api/entries?year=&month=` | List entry metadata for a month |
+| GET | `/api/entries/day/{date}` | Entries for a specific day |
+| GET | `/api/entries/tags/all` | All unique tags for user |
+| GET | `/api/entries/{path}` | Get single entry (decrypted, path-validated) |
+| POST | `/api/entries` | Create entry |
+| PUT | `/api/entries/{path}` | Update entry |
+| DELETE | `/api/entries/{path}` | Delete entry |
+| GET | `/api/search?tags=&from_date=&to_date=` | Search entries |
+| GET | `/api/stats` | Streaks, mood averages, counts, distribution |
+| GET | `/api/settings` | Get user preferences |
+| PUT | `/api/settings` | Update user preferences |
+| GET | `/api/export?format=tar.gz|zip` | Download decrypted archive |
+| GET | `/api/export/pdf?from_date=&to_date=` | Download PDF with optional date range |
+| POST | `/api/export/import` | Upload archive or .md/.txt files |
+| GET | `/{full_path:path}` | SPA catch-all — serves index.html for all client-side routes |
 
-**Path pattern**: `entries/{username}/YYYY/MM/YYYY-MM-DD_HHmm.enc`
+## Authentication & Sessions
 
-**On-disk binary format** (AES-256-GCM):
-```
-[12-byte IV][AES-256-GCM ciphertext][16-byte GCM authentication tag]
-```
+1. **Login flow**: password → PBKDF2(600K) → KEK_pwd → AES-GCM unwrap → UEK (256-bit)
+2. **Session**: UEK stored server-side in dict (24h TTL), session ID sent as HTTP-only cookie (SameSite=Lax)
+3. **Password reset**: Three-key hierarchy — UEK encrypted with both password-KEK and security-answer-KEK
+4. **Logout**: Session deleted, cookie cleared, UEK discarded
+5. **Path traversal**: All entry endpoints validate the requested path is within the user's entries directory
+6. **Username validation**: Regex `^[a-zA-Z0-9_\-\.]{2,32}$`
+7. **Login errors**: Generic "Invalid credentials" for both wrong username and wrong password
 
-**Plaintext before encryption** — standard Markdown with YAML frontmatter:
-```markdown
----
-title: "Today's Reflection"
-date: 2026-06-22 14:30
-mood: 4
-tags: [work, gratitude]
-author: alice
----
+## Encryption (Three-Key Hierarchy)
 
-**CBT Prompt**: What evidence supports this thought?
-**Response**: I realized my initial reaction was exaggerated...
-
-The rest of the journal entry continues here...
-```
-
-### User credentials (`data/users.json`)
-
-```json
-{
-  "alice": {
-    "created_at": "2026-06-22T10:00:00",
-    "salt": "base64...",
-    "password_hash": "sha256$base64...",
-    "entry_key_encrypted_with_pwd": "base64...",
-    "entry_key_salt_pwd": "base64...",
-    "entry_key_encrypted_with_secret": "base64...",
-    "entry_key_salt_secret": "base64...",
-    "security_question": "What is your first pet's name?"
-  }
-}
-```
-
-## Encryption Design (Three-Key Hierarchy)
-
-### Purpose
-Users must be able to reset their password (via security question) **without** losing access to their journal entries.
-
-### Flow
 ```
                     +--------------------------+
                     |  User Entry Key (UEK)    |
                     |  Random 256-bit AES key  |
                     +----+--------------+------+
                          |              |
-              encrypts   |              |  encrypts
-                 with    |              |  with
+              encrypted  |              |  encrypted
+              with KEK   |              |  with KEK
+              (password) |              |  (secret answer)
                          v              v
               +----------------+  +------------------+
               | KEK_pwd        |  | KEK_secret       |
-              | derived from   |  | derived from     |
-              | user password  |  | security answer  |
-              | (PBKDF2)       |  | (PBKDF2)         |
+              | PBKDF2(600K)   |  | PBKDF2(600K)     |
               +----------------+  +------------------+
 ```
 
-### Key derivation (PBKDF2HMAC)
-- Algorithm: SHA-256
-- Iterations: 600,000 (OWASP 2023 recommendation)
-- Salt: 16 random bytes per user
-- Output: 32 bytes (256-bit AES key)
+- Entry files: AES-256-GCM with random 12-byte IV per entry
+- User key encrypted with KEK derived from password (PBKDF2 HMAC-SHA256, 600K iterations)
+- Security answer also derives a KEK — password reset without data loss
 
-### Entry encryption (AES-256-GCM)
-- Algorithm: AES with 256-bit key in GCM mode (authenticated encryption)
-- IV: 12 random bytes per entry
-- Auth tag: 16 bytes (appended to ciphertext)
-- Provides both confidentiality and integrity
+## Forward-Compatible Data Model
 
-## Mood Colors
-| Mood | Label | Hex |
-|------|-------|-----|
-| 0 | Terrible | `#4a148c` (dark purple) |
-| 1 | Bad | `#6a1b9a` (purple) |
-| 2 | Poor | `#9c27b0` (lavender) |
-| 3 | Okay | `#9e9e9e` (grey) |
-| 4 | Good | `#66bb6a` (pale green) |
-| 5 | Great | `#43a047` (green) |
-| 6 | Amazing | `#2e7d32` (bright green) |
+- **create_entry / update_entry**: Preserve any unknown frontmatter fields passed in entry_data
+- **build_export_archive**: Export ALL frontmatter fields (not just known ones)
+- **_process_plain_file**: Import/restore unknown fields from exported .md files
+- **get_user_settings**: Falls back from `reflection_categories` → `cbt_enabled_categories` (migration path)
+- **save_user_settings**: Saves any key passed (not restricted to a fixed list)
+
+## Mood System
+
+| Mood | Label | Emoji | Color |
+|------|-------|-------|-------|
+| 0 | Terrible | 😞 | `#4a148c` |
+| 1 | Bad | 😢 | `#6a1b9a` |
+| 2 | Poor | 😕 | `#9c27b0` |
+| 3 | Okay | 😐 | `#9e9e9e` |
+| 4 | Good | 🙂 | `#66bb6a` |
+| 5 | Great | 😊 | `#43a047` |
+| 6 | Amazing | 🤩 | `#2e7d32` |
+
+Emoji characters use `String.fromCodePoint()` in JSX expressions to avoid encoding issues when pushing through GitHub's API.
+
+## Frontend Architecture
+
+- **SPA routing**: FastAPI catch-all route `/{full_path:path}` serves `index.html` for all client-side routes
+- **Navigation**: Top navbar with tabs (Journal, New Entry, Search, Stats, About CBT, Settings)
+- **Auth guard**: App.jsx checks `AuthContext.user` — unauthenticated users see login/signup/reset routes
+- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing
+- **Theme**: Tailwind `class` strategy — `dark` class on `<html>` via `ThemeContext`
 
 ## Deployment
 
-### Option A: Docker (recommended)
+### Docker (recommended)
 ```bash
-git clone <repo> && cd DailyMoodJournal
 docker compose up -d
 # Access at http://<homelab-ip>:8501
 ```
 
-### Option B: Python directly
+### Development (no Docker)
 ```bash
-git clone <repo> && cd DailyMoodJournal
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-streamlit run app.py --server.port 8501
+# Terminal 1 — Backend
+cd backend && pip install -r ../requirements.txt && uvicorn main:app --reload --port 8501
+
+# Terminal 2 — Frontend
+cd frontend && npm install && npm run dev
+# Access at http://localhost:5173 (proxies API to :8501)
 ```
 
-### Volumes (Docker)
+### Volumes
 | Host path | Container path | Purpose |
 |-----------|---------------|---------|
 | `./entries` | `/app/entries` | Encrypted journal entries |
 | `./data` | `/app/data` | users.json + master.key |
 
-### Reverse proxy (Caddy, optional)
-```caddyfile
-daily.example.com {
-    reverse_proxy localhost:8501
-    tls internal
-}
+## Dependencies
+
+### Backend (requirements.txt)
+```
+cryptography>=42.0
+PyYAML>=6.0
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9
+numpy>=1.24
+fpdf2>=2.7
 ```
 
-## Dependencies
+### Frontend (package.json)
 ```
-streamlit>=1.36
-cryptography>=42.0
-matplotlib>=3.8
-pandas>=2.1
-PyYAML>=6.0
-bcrypt>=4.0
+react, react-dom, react-router-dom, axios, recharts
+dev: vite, @vitejs/plugin-react, tailwindcss, postcss, autoprefixer
 ```
