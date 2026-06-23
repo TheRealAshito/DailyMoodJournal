@@ -70,7 +70,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-bold text-center mb-1">DailyMood</h1>
+      <h1 className="text-2xl font-bold text-center mb-1">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
       <p className="text-center text-custom-muted mb-6">{t('reset_password')}</p>
 
       {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 rounded-lg p-3 mb-4 text-sm">{error}</div>}

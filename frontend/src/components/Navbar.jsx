@@ -26,7 +26,7 @@ export default function Navbar() {
   return (
     <header className="sidebar-bg border-b border-custom sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 flex items-center h-14 gap-4">
-        <h1 className="text-lg font-bold text-purple-600 whitespace-nowrap">\uD83D\uDCD4 DailyMood</h1>
+        <h1 className="text-lg font-bold text-purple-600 whitespace-nowrap">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
 
         <nav className="flex items-center gap-1 flex-1 overflow-x-auto">
           {NAV_ITEMS.map((item) => (
@@ -61,24 +61,20 @@ export default function Navbar() {
           <div className="flex gap-0.5">
             <button
               onClick={() => changeLocale('en')}
-              className={`px-1.5 py-1 rounded text-xs font-medium ${
-                locale === 'en' ? 'bg-purple-600 text-white' : 'text-custom-muted hover-bg'
-              }`}
+              className={`px-1.5 py-1 rounded text-xs font-medium ${locale === 'en' ? 'bg-purple-600 text-white' : 'text-custom-muted hover-bg'}`}
             >
               EN
             </button>
             <button
               onClick={() => changeLocale('pt-BR')}
-              className={`px-1.5 py-1 rounded text-xs font-medium ${
-                locale === 'pt-BR' ? 'bg-purple-600 text-white' : 'text-custom-muted hover-bg'
-              }`}
+              className={`px-1.5 py-1 rounded text-xs font-medium ${locale === 'pt-BR' ? 'bg-purple-600 text-white' : 'text-custom-muted hover-bg'}`}
             >
               PT
             </button>
           </div>
 
           <button onClick={handleLogout} className="px-2 py-1.5 rounded-lg text-sm text-red-500 hover-bg" title="Logout">
-            \uD83D\uDEAA
+            {String.fromCodePoint(0x1F6AA)}
           </button>
         </div>
       </div>
