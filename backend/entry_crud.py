@@ -2,8 +2,9 @@ import os
 from datetime import datetime
 from backend.crypto import encrypt_entry, decrypt_entry
 from backend.utils import build_entry_path, parse_entry_text, build_entry_text, list_user_entries, extract_date_from_path
+from backend.config import DATA_VERSION
 
-KNOWN_FIELDS = {"title", "date", "mood", "tags", "author", "body", "path"}
+KNOWN_FIELDS = {"title", "date", "mood", "tags", "author", "body", "path", "dailymood_version"}
 
 
 def _merge_frontmatter(known: dict, extra: dict) -> dict:
@@ -28,6 +29,7 @@ def create_entry(username: str, entry_data: dict, user_key: bytes) -> str:
         "mood": entry_data["mood"],
         "tags": entry_data.get("tags", []),
         "author": username,
+        "dailymood_version": DATA_VERSION,
     }
     extra = {k: v for k, v in entry_data.items() if k not in KNOWN_FIELDS and k not in frontmatter}
     frontmatter = _merge_frontmatter(frontmatter, extra)
@@ -71,6 +73,7 @@ def update_entry(path: str, entry_data: dict, user_key: bytes) -> str:
         "mood": entry_data["mood"],
         "tags": entry_data.get("tags", []),
         "author": entry_data.get("author", ""),
+        "dailymood_version": DATA_VERSION,
     }
     extra = {k: v for k, v in entry_data.items() if k not in KNOWN_FIELDS and k not in frontmatter}
     if existing:

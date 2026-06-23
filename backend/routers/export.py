@@ -59,5 +59,5 @@ async def import_entries(request: Request, files: list[UploadFile] = File(...)):
     if session is None:
         raise HTTPException(401, "Not authenticated")
 
-    imported, skipped = process_import_files(session["username"], files, session["user_key"])
-    return {"imported": imported, "skipped": skipped}
+    result = process_import_files(session["username"], files, session["user_key"])
+    return result

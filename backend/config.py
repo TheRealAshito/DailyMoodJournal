@@ -53,13 +53,18 @@ def load_users() -> dict:
     if not os.path.exists(USERS_FILE):
         return {}
     with open(USERS_FILE, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+    if isinstance(data, dict):
+        data.pop("_data_version", None)
+    return data
 
 
 def save_users(users: dict):
     ensure_directories()
+    data = dict(users)
+    data["_data_version"] = DATA_VERSION
     with open(USERS_FILE, "w") as f:
-        json.dump(users, f, indent=2)
+        json.dump(data, f, indent=2)
     os.chmod(USERS_FILE, 0o600)
 
 
