@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Query
 from fastapi.responses import Response
-from datetime import datetime
-from backend.export_import import build_export_archive, process_import_files
+from datetime import date, datetime
+from backend.export_import import build_export_archive, build_pdf_export, process_import_files
 from backend.routers.auth import _get_session
 
 router = APIRouter(prefix="/api/export", tags=["export"])
@@ -23,7 +23,33 @@ def export_entries(request: Request, format: str = Query("tar.gz", pattern=r"^(t
     return Response(
         content=data,
         media_type=mime,
-        headers={"Content-Disposition": f'attachment; filename=dailymood_export_{session["username"]}_{ts}.{ext}'},
+        headers={"Content-Disposition": f"attachment; filename=dailymood_export_{session['username']}_{ts}.{ext}"},
+    )
+
+
+@router.get("/pdf")
+def export_pdf(request: Request, from_date: str = Query(""), to_date: str = Query("")):
+    session = _get_session(request)
+    if session is None:
+        raise HTTPException(401, "Not authenticated")
+
+    try:
+        date_from = date.fromisoformat(from_date) if from_date else date.min
+    except ValueError:
+        date_from = date.min
+    try:
+        date_to = date.fromisoformat(to_date) if to_date else date.max
+    except ValueError:
+        date_to = date.max
+
+    data = build_pdf_export(session["username"], session["user_key"], date_from, date_to)
+    if data is None:
+        raise HTTPException(404, "No entries to export")
+
+    return Response(
+        content=data,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=dailymood_journal_{session['username']}.pdf"},
     )
 
 

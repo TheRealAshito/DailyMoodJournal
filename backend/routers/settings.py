@@ -9,8 +9,7 @@ router = APIRouter(prefix="/api/settings", tags=["settings"])
 class SettingsUpdate(BaseModel):
     theme: str | None = None
     language: str | None = None
-    cbt_enabled_categories: list[str] | None = None
-    cbt_show_education: bool | None = None
+    reflection_categories: list[str] | None = None
 
 
 @router.get("")
@@ -32,10 +31,8 @@ def update_settings(request: Request, body: SettingsUpdate):
         updates["theme"] = body.theme
     if body.language is not None:
         updates["language"] = body.language
-    if body.cbt_enabled_categories is not None:
-        updates["cbt_enabled_categories"] = body.cbt_enabled_categories
-    if body.cbt_show_education is not None:
-        updates["cbt_show_education"] = body.cbt_show_education
+    if body.reflection_categories is not None:
+        updates["reflection_categories"] = body.reflection_categories
 
     save_user_settings(session["username"], updates)
     return get_user_settings(session["username"])
