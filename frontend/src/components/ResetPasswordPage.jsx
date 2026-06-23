@@ -29,7 +29,8 @@ export default function ResetPasswordPage() {
         setError('User not found.')
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Error.')
+      const detail = err.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : (detail?.[0]?.msg || 'Error.'))
     }
     setLoading(false)
   }
@@ -38,11 +39,12 @@ export default function ResetPasswordPage() {
     setError('')
     setLoading(true)
     try {
-      const r = await api.post('/auth/password-reset-verify', { username, password: answer })
+      const r = await api.post('/auth/password-reset-verify', { username, answer })
       setToken(r.data.token)
       setStep('new_password')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Incorrect answer.')
+      const detail = err.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : (detail?.[0]?.msg || 'Error.'))
     }
     setLoading(false)
   }
@@ -63,7 +65,8 @@ export default function ResetPasswordPage() {
       setSuccess('Password reset! Redirecting...')
       setTimeout(() => navigate('/login'), 2000)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed.')
+      const detail = err.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : (detail?.[0]?.msg || 'Failed.'))
     }
     setLoading(false)
   }

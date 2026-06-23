@@ -44,7 +44,7 @@ DailyMoodJournal/
 │   │   ├── components/
 │   │   │   ├── LoginPage.jsx / SignupPage.jsx / ResetPasswordPage.jsx
 │   │   │   ├── Navbar.jsx   # Top nav bar + theme toggle + language switcher
-│   │   │   ├── Calendar.jsx # Mood-colored month grid + date picker + entries
+│   │   │   ├── Calendar.jsx # Mood-colored month grid — click a day opens new entry with that date pre-filled
 │   │   │   ├── EntryForm.jsx # New/edit entry + mood emojis + reflection prompts
 │   │   │   ├── EntryCard.jsx # Read-only entry with edit/delete buttons
 │   │   │   ├── MoodSlider.jsx # Emoji-based mood selector (0-6) using String.fromCodePoint
@@ -103,7 +103,7 @@ DailyMoodJournal/
 | PUT | `/api/settings` | Update user preferences |
 | GET | `/api/export?format=tar.gz|zip` | Download decrypted archive |
 | GET | `/api/export/pdf?from_date=&to_date=` | Download PDF with optional date range |
-| POST | `/api/export/import` | Upload archive or .md/.txt files |
+| POST | `/api/export/import` | Upload archive or .md/.txt files — returns `{imported, skipped, files[]}` with per-file status |
 | GET | `/{full_path:path}` | SPA catch-all — serves index.html for all client-side routes |
 
 ## Authentication & Sessions
@@ -113,10 +113,52 @@ DailyMoodJournal/
 3. **Password reset**: Three-key hierarchy — UEK encrypted with both password-KEK and security-answer-KEK
 4. **Logout**: Session deleted, cookie cleared, UEK discarded
 5. **Path traversal**: All entry endpoints validate the requested path is within the user's entries directory
-6. **Username validation**: Regex `^[a-zA-Z0-9_\-\.]{2,32}$`
+6. **Username validation**: Regex `^[a-zA-Z0-9_\\-\\.]{2,32}$`
 7. **Login errors**: Generic "Invalid credentials" for both wrong username and wrong password
 
-## Encryption (Three-Key Hierarchy)
+## Data Model & Versioning
+
+### Entry Schema (encrypted `.enc` files)
+
+Each entry is stored as AES-256-GCM ciphertext. When decrypted, the plaintext is Markdown with YAML frontmatter:
+
+```yaml
+---
+title: My Day
+date: 2026-06-23 12:00
+mood: 4
+tags: [work, gratitude]
+author: username
+dailymood_version: '1.0'       # ← schema version of the app that created this entry
+---
+Body text here...
+```
+
+- `dailymood_version` is stamped on every create/update and preserved through export/import
+- Unknown frontmatter fields are never dropped — they survive the full CRUD + export + import cycle
+- The version field enables future schema migrations (old entries can be identified and migrated on read)
+
+### User Database (`data/users.json`)
+
+```json
+{
+  "_data_version": "1.0",       # ← schema version, stripped on load
+  "username": {
+    "salt": "...",
+    "password_hash": "...",
+    ...
+  }
+}
+```
+
+- `_data_version` is auto-added on every write, silently stripped on read
+- Missing `_data_version` implies v1.0 (backward compatible with unversioned files)
+
+### Export Format
+
+Exported `.md` files are plaintext YAML frontmatter + Markdown body. They carry `dailymood_version` so re-importing preserves the originating schema version. Timestamp collisions on re-import are automatically deconflicted by minute offsets (1–59). The import API returns per-file results: `{imported, skipped, files: [{filename, status, reason?}]}`.
+
+### Encryption (Three-Key Hierarchy)
 
 ```
                     +--------------------------+
@@ -138,11 +180,11 @@ DailyMoodJournal/
 - User key encrypted with KEK derived from password (PBKDF2 HMAC-SHA256, 600K iterations)
 - Security answer also derives a KEK — password reset without data loss
 
-## Forward-Compatible Data Model
+### Forward Compatibility
 
-- **create_entry / update_entry**: Preserve any unknown frontmatter fields passed in entry_data
-- **build_export_archive**: Export ALL frontmatter fields (not just known ones)
-- **_process_plain_file**: Import/restore unknown fields from exported .md files
+- **create_entry / update_entry**: Preserve any unknown frontmatter fields passed in entry_data. `dailymood_version` is auto-stamped.
+- **build_export_archive**: Export ALL frontmatter fields (not just known ones), including `dailymood_version`
+- **_process_plain_file**: Import/restore unknown fields from exported .md files; timestamp collisions auto-deconflicted
 - **get_user_settings**: Falls back from `reflection_categories` → `cbt_enabled_categories` (migration path)
 - **save_user_settings**: Saves any key passed (not restricted to a fixed list)
 
