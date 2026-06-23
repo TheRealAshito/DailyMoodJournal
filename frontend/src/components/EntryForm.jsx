@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../api'
 import { useI18n } from '../i18n'
 import MoodSlider from './MoodSlider'
@@ -19,12 +19,14 @@ export default function EntryForm() {
   const { t } = useI18n()
   const { encodedPath } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const urlDate = searchParams.get('date')
   const [settings, setSettings] = useState({ reflection_categories: ['self_reflection', 'gratitude', 'growth_learning', 'emotional_awareness'] })
   const [title, setTitle] = useState('')
   const [mood, setMood] = useState(3)
   const [tags, setTags] = useState('')
   const [body, setBody] = useState('')
-  const [edate, setEdate] = useState(new Date().toISOString().slice(0, 10))
+  const [edate, setEdate] = useState(urlDate || new Date().toISOString().slice(0, 10))
   const [etime, setEtime] = useState(new Date().toTimeString().slice(0, 5))
   const [includePrompts, setIncludePrompts] = useState(false)
   const [prompts, setPrompts] = useState([])

@@ -6,8 +6,12 @@ from datetime import datetime
 from backend.crypto import encrypt_entry
 from backend.entry_crud import get_entry
 from backend.utils import list_user_entries, parse_entry_text, build_entry_path, build_entry_text, validate_entry_data
+from backend.config import MOOD_LABELS, MOOD_COLORS as MOOD_COLORS_RGB, DATA_VERSION
 
 from fpdf import FPDF
+
+
+MOOD_COLORS_PDF = {k: tuple(int(v.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) for k, v in MOOD_COLORS_RGB.items()}
 
 
 def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=None) -> bytes | None:
@@ -53,15 +57,12 @@ def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=Non
     pdf.cell(0, 7, f"Total entries: {len(decoded)}", align="C", ln=True)
     pdf.ln(8)
 
-    MOOD_LABELS = {0: "Terrible", 1: "Bad", 2: "Poor", 3: "Okay", 4: "Good", 5: "Great", 6: "Amazing"}
-    MOOD_COLORS = {0: (74, 20, 140), 1: (106, 27, 154), 2: (156, 39, 176), 3: (158, 158, 158), 4: (102, 187, 106), 5: (67, 160, 71), 6: (46, 125, 50)}
-
     for i, entry in enumerate(decoded):
         if i > 0:
             pdf.add_page()
 
         mood = entry.get("mood", 3)
-        color = MOOD_COLORS.get(mood, (158, 158, 158))
+        color = MOOD_COLORS_PDF.get(mood, (158, 158, 158))
         label = MOOD_LABELS.get(mood, "Unknown")
 
         header_color = color
@@ -143,9 +144,10 @@ def build_export_archive(username: str, fmt: str, user_key: bytes) -> bytes | No
     return buf.getvalue()
 
 
-def process_import_files(username: str, files: list, user_key: bytes) -> tuple[int, int]:
-    imported = 0
-    skipped = 0
+def process_import_files(username: str, files: list, user_key: bytes) -> dict:
+    total_imported = 0
+    total_skipped = 0
+    file_results = []
     existing_paths = set(list_user_entries(username))
 
     for uploaded_file in files:
@@ -153,29 +155,37 @@ def process_import_files(username: str, files: list, user_key: bytes) -> tuple[i
         content = uploaded_file.file.read()
 
         if filename.endswith(".tar.gz") or filename.endswith(".tgz"):
-            result = _process_tar(content, username, user_key, existing_paths)
+            result = _process_tar(content, username, user_key, existing_paths, filename)
         elif filename.endswith(".zip"):
-            result = _process_zip(content, username, user_key, existing_paths)
+            result = _process_zip(content, username, user_key, existing_paths, filename)
         elif filename.endswith(".md") or filename.endswith(".txt"):
             try:
                 text = content.decode("utf-8")
             except UnicodeDecodeError:
-                skipped += 1
+                total_skipped += 1
+                file_results.append({"filename": filename, "status": "skipped", "reason": "Unicode decode error"})
                 continue
-            result = _process_plain_file(text, username, user_key, existing_paths)
+            result = _process_plain_file(text, username, user_key, existing_paths, filename)
         else:
-            skipped += 1
+            total_skipped += 1
+            file_results.append({"filename": filename, "status": "skipped", "reason": "Unsupported file type"})
             continue
 
-        imported += result[0]
-        skipped += result[1]
+        total_imported += result["imported"]
+        total_skipped += result["skipped"]
+        file_results.extend(result["files"])
 
-    return imported, skipped
+    return {
+        "imported": total_imported,
+        "skipped": total_skipped,
+        "files": file_results,
+    }
 
 
-def _process_tar(data: bytes, username: str, user_key: bytes, existing_paths: set) -> tuple[int, int]:
+def _process_tar(data: bytes, username: str, user_key: bytes, existing_paths: set, archive_name: str = "archive.tar.gz") -> dict:
     imported = 0
     skipped = 0
+    files = []
     buf = io.BytesIO(data)
     with tarfile.open(fileobj=buf, mode="r:gz") as tar:
         for member in tar.getmembers():
@@ -185,32 +195,35 @@ def _process_tar(data: bytes, username: str, user_key: bytes, existing_paths: se
             if f is None:
                 continue
             text = f.read().decode("utf-8")
-            result = _process_plain_file(text, username, user_key, existing_paths)
-            imported += result[0]
-            skipped += result[1]
-    return imported, skipped
+            result = _process_plain_file(text, username, user_key, existing_paths, member.name)
+            imported += result["imported"]
+            skipped += result["skipped"]
+            files.extend(result["files"])
+    return {"imported": imported, "skipped": skipped, "files": files}
 
 
-def _process_zip(data: bytes, username: str, user_key: bytes, existing_paths: set) -> tuple[int, int]:
+def _process_zip(data: bytes, username: str, user_key: bytes, existing_paths: set, archive_name: str = "archive.zip") -> dict:
     imported = 0
     skipped = 0
+    files = []
     buf = io.BytesIO(data)
     with zipfile.ZipFile(buf, "r") as zf:
         for name in zf.namelist():
             if name.endswith("/"):
                 continue
             text = zf.read(name).decode("utf-8")
-            result = _process_plain_file(text, username, user_key, existing_paths)
-            imported += result[0]
-            skipped += result[1]
-    return imported, skipped
+            result = _process_plain_file(text, username, user_key, existing_paths, name)
+            imported += result["imported"]
+            skipped += result["skipped"]
+            files.extend(result["files"])
+    return {"imported": imported, "skipped": skipped, "files": files}
 
 
-def _process_plain_file(text: str, username: str, user_key: bytes, existing_paths: set) -> tuple[int, int]:
+def _process_plain_file(text: str, username: str, user_key: bytes, existing_paths: set, filename: str = "unknown") -> dict:
     frontmatter, body = parse_entry_text(text)
 
     if "title" not in frontmatter:
-        return 0, 1
+        return {"imported": 0, "skipped": 1, "files": [{"filename": filename, "status": "skipped", "reason": "Missing title in frontmatter"}]}
 
     title = frontmatter.get("title", "Untitled")
     mood = frontmatter.get("mood", 3)
@@ -233,7 +246,7 @@ def _process_plain_file(text: str, username: str, user_key: bytes, existing_path
         try:
             dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M")
         except ValueError:
-            return 0, 1
+            return {"imported": 0, "skipped": 1, "files": [{"filename": filename, "status": "skipped", "reason": f"Invalid date: {date_str}"}]}
 
     entry_data = {
         "title": title,
@@ -250,11 +263,19 @@ def _process_plain_file(text: str, username: str, user_key: bytes, existing_path
 
     errors = validate_entry_data(entry_data)
     if errors:
-        return 0, 1
+        return {"imported": 0, "skipped": 1, "files": [{"filename": filename, "status": "skipped", "reason": "; ".join(errors)}]}
 
     path = build_entry_path(username, dt)
     if path in existing_paths:
-        return 0, 1
+        for offset in range(1, 60):
+            new_dt = dt.replace(minute=(dt.minute + offset) % 60)
+            new_path = build_entry_path(username, new_dt)
+            if new_path not in existing_paths:
+                path = new_path
+                dt = new_dt
+                break
+        else:
+            return {"imported": 0, "skipped": 1, "files": [{"filename": filename, "status": "skipped", "reason": "Could not deconflict timestamp (60 attempts)"}]}
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
@@ -275,4 +296,4 @@ def _process_plain_file(text: str, username: str, user_key: bytes, existing_path
         f.write(ciphertext)
     existing_paths.add(path)
 
-    return 1, 0
+    return {"imported": 1, "skipped": 0, "files": [{"filename": filename, "status": "imported"}]}

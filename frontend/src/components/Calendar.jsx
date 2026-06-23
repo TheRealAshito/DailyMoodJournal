@@ -110,12 +110,11 @@ export default function Calendar() {
             const color = mood !== null ? MOOD_COLORS[mood] : 'transparent'
             const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
             const isToday = dateKey === today.toISOString().slice(0, 10)
-            const isSelected = dateKey === selectedDate
             return (
               <button
                 key={`day-${day}`}
-                onClick={() => setSelectedDate(dateKey)}
-                className={`calendar-cell aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-medium transition-all ${isSelected ? 'ring-2 ring-purple-500 ring-offset-1 dark:ring-offset-gray-800' : ''}`}
+                onClick={() => navigate(`/new?date=${dateKey}`)}
+                className="calendar-cell aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-medium transition-all hover:ring-2 hover:ring-purple-400"
                 style={{ backgroundColor: mood !== null ? color : undefined }}
               >
                 <span className={mood !== null || isToday ? 'text-white drop-shadow-md' : 'text-custom'}>{day}</span>
