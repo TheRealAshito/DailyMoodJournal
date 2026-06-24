@@ -73,11 +73,11 @@ export default function Calendar() {
     else setMonth(month + 1)
   }
 
-  function avgMood(day) {
+  function dayMood(day) {
     const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     const moods = moodByDay[key]
     if (!moods || moods.length === 0) return null
-    return Math.round(moods.reduce((a, b) => a + b, 0) / moods.length)
+    return moods[0]
   }
 
   const grid = getMonthGrid(year, month)
@@ -106,7 +106,7 @@ export default function Calendar() {
           ))}
           {grid.flat().map((day, i) => {
             if (day === null) return <div key={`empty-${i}`} />
-            const mood = avgMood(day)
+            const mood = dayMood(day)
             const color = mood !== null ? MOOD_COLORS[mood] : 'transparent'
             const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
             const isToday = dateKey === today.toISOString().slice(0, 10)

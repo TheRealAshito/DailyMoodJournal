@@ -10,7 +10,7 @@
 | Data storage | Encrypted `.enc` files | AES-256-GCM, user owns the raw key material |
 | Auth storage | JSON file (`data/users.json`) | Single file, easy to back up, fields are hashed/encrypted |
 | Encryption | `cryptography` library (AES-GCM, PBKDF2) | Industry standard, audited |
-| PDF generation | fpdf2 | Pure Python, no external dependencies |
+| PDF generation | fpdf2 + DejaVuSans | Unicode font supports emoji/accents/CJK, auto-detects user language |
 | Archive | Python `tarfile` + `zipfile` | Standard library |
 | Sessions | In-memory dict (server-side, 24h TTL) | Session ID via HTTP-only cookie, UEK never touches frontend |
 | i18n | JSON locale files | `en.json` + `pt-BR.json` loaded by React context |
@@ -44,7 +44,7 @@ DailyMoodJournal/
 │   │   ├── components/
 │   │   │   ├── LoginPage.jsx / SignupPage.jsx / ResetPasswordPage.jsx
 │   │   │   ├── Navbar.jsx   # Top nav bar + theme toggle + language switcher
-│   │   │   ├── Calendar.jsx # Mood-colored month grid — click a day opens new entry with that date pre-filled
+│   │   │   ├── Calendar.jsx # Mood-colored month grid — click a day opens new entry with that date pre-filled; heatmap shows most recent entry's mood color
 │   │   │   ├── EntryForm.jsx # New/edit entry + mood emojis + reflection prompts
 │   │   │   ├── EntryCard.jsx # Read-only entry with edit/delete buttons
 │   │   │   ├── MoodSlider.jsx # Emoji-based mood selector (0-6) using String.fromCodePoint
@@ -114,7 +114,7 @@ DailyMoodJournal/
 4. **Logout**: Session deleted, cookie cleared, UEK discarded
 5. **Path traversal**: All entry endpoints validate the requested path is within the user's entries directory
 6. **Username validation**: Regex `^[a-zA-Z0-9_\\-\\.]{2,32}$`
-7. **Login errors**: Generic "Invalid credentials" for both wrong username and wrong password
+7. **Login errors**: Generic \"Invalid credentials\" for both wrong username and wrong password
 
 ## Data Model & Versioning
 
@@ -157,6 +157,18 @@ Body text here...
 ### Export Format
 
 Exported `.md` files are plaintext YAML frontmatter + Markdown body. They carry `dailymood_version` so re-importing preserves the originating schema version. Timestamp collisions on re-import are automatically deconflicted by minute offsets (1–59). The import API returns per-file results: `{imported, skipped, files: [{filename, status, reason?}]}`.
+
+### PDF Export
+
+PDFs are generated with fpdf2 using DejaVuSans Unicode font (installed via `fonts-dejavu-core` in the Docker image; falls back to bundled/system path). The PDF is fully localized based on the user's language setting:
+
+| Label | English | Portuguese (pt-BR) |
+|-------|---------|-------------------|
+| Title | DailyMood Journal | Diário do Humor |
+| Mood labels | Terrible → Amazing | Péssimo → Incrível |
+| Date format | DD/MM/YYYY HH:MM | DD/MM/YYYY HH:MM |
+
+Characters above U+FFFF (emoji supplementary plane) are stripped gracefully to prevent font rendering errors. The x position is reset after `multi_cell()` calls to prevent fpdf2 2.8.x from leaving the cursor at the right margin.
 
 ### Encryption (Three-Key Hierarchy)
 
@@ -207,7 +219,7 @@ Emoji characters use `String.fromCodePoint()` in JSX expressions to avoid encodi
 - **SPA routing**: FastAPI catch-all route `/{full_path:path}` serves `index.html` for all client-side routes
 - **Navigation**: Top navbar with tabs (Journal, New Entry, Search, Stats, About CBT, Settings)
 - **Auth guard**: App.jsx checks `AuthContext.user` — unauthenticated users see login/signup/reset routes
-- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing
+- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing. Contains ~180 keys including UI strings, 64 reflection prompts, and 42 CBT education keys (12 distortions × 3 fields + 6 headers).
 - **Theme**: Tailwind `class` strategy — `dark` class on `<html>` via `ThemeContext`
 
 ## Deployment
@@ -233,6 +245,10 @@ cd frontend && npm install && npm run dev
 |-----------|---------------|---------|
 | `./entries` | `/app/entries` | Encrypted journal entries |
 | `./data` | `/app/data` | users.json + master.key |
+
+### Docker Image
+
+Multi-stage build: Node 20 slim builds the React frontend → Python 3.11 slim runs the app. The image installs `fonts-dejavu-core` (provides DejaVuSans.ttf for PDF Unicode support), `gcc` (build dependency), and all Python packages from `requirements.txt`.
 
 ## Dependencies
 
