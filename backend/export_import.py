@@ -133,7 +133,7 @@ def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=Non
         pdf.cell(0, 10, f"  {_clean_pdf_text(entry.get('title', 'Untitled'))}", fill=True, ln=True)
 
         pdf.set_text_color(60, 60, 60)
-        pdf.set_font("DejaVuSans", "", 9)
+        pdf.set_font("DejaVuSans", "", 11)
         entry_date = entry.get("date", "")
         try:
             dt_obj = dt_parse.strptime(entry_date, "%Y-%m-%d %H:%M")
