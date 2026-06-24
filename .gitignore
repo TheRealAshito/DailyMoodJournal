@@ -8,3 +8,4 @@ venv/
 .streamlit/
 node_modules/
 package-lock.json
+backend/fonts/*.ttf

@@ -14,6 +14,30 @@ from fpdf import FPDF
 MOOD_COLORS_PDF = {k: tuple(int(v.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) for k, v in MOOD_COLORS_RGB.items()}
 
 
+FONT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
+FONT_PATH = os.path.join(FONT_DIR, "DejaVuSans.ttf")
+# Fallback to system font if bundled one doesn't exist
+_SYSTEM_FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+if not os.path.exists(FONT_PATH):
+    FONT_PATH = _SYSTEM_FONT
+
+
+def _init_pdf() -> FPDF:
+    pdf = FPDF()
+    pdf.add_font("DejaVuSans", "", FONT_PATH)
+    pdf.add_font("DejaVuSans", "B", FONT_PATH)
+    return pdf
+
+
+def _clean_pdf_text(text: str) -> str:
+    """Strip characters that DejaVuSans can't render (emoji and other SMP chars)."""
+    cleaned = []
+    for ch in text:
+        if ord(ch) <= 0xFFFF and ch not in "\ud800\udc00":
+            cleaned.append(ch)
+    return "".join(cleaned)
+
+
 def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=None) -> bytes | None:
     entries = list_user_entries(username)
     if not entries:
@@ -45,13 +69,13 @@ def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=Non
 
     decoded.sort(key=lambda e: e.get("date", ""), reverse=True)
 
-    pdf = FPDF()
+    pdf = _init_pdf()
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
 
-    pdf.set_font("Helvetica", "B", 22)
+    pdf.set_font("DejaVuSans", "B", 22)
     pdf.cell(0, 12, "DailyMood Journal", align="C", ln=True)
-    pdf.set_font("Helvetica", "", 10)
+    pdf.set_font("DejaVuSans", "", 10)
     pdf.cell(0, 7, f"User: {username}", align="C", ln=True)
     pdf.cell(0, 7, f"Exported: {datetime.now().strftime('%B %d, %Y')}", align="C", ln=True)
     pdf.cell(0, 7, f"Total entries: {len(decoded)}", align="C", ln=True)
@@ -68,26 +92,27 @@ def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=Non
         header_color = color
         pdf.set_fill_color(*header_color)
         pdf.set_text_color(255, 255, 255)
-        pdf.set_font("Helvetica", "B", 14)
-        pdf.cell(0, 10, f"  {entry.get('title', 'Untitled')}", fill=True, ln=True)
+        pdf.set_font("DejaVuSans", "B", 14)
+        pdf.cell(0, 10, f"  {_clean_pdf_text(entry.get('title', 'Untitled'))}", fill=True, ln=True)
 
         pdf.set_text_color(60, 60, 60)
-        pdf.set_font("Helvetica", "", 9)
+        pdf.set_font("DejaVuSans", "", 9)
         pdf.cell(0, 6, f"  {entry.get('date', '')}  |  Mood: {label} ({mood})", ln=True)
 
         tags = entry.get("tags", [])
         if tags:
-            pdf.cell(0, 6, f"  Tags: {', '.join(tags)}", ln=True)
+            pdf.cell(0, 6, f"  Tags: {_clean_pdf_text(', '.join(tags))}", ln=True)
 
         pdf.ln(3)
         body = entry.get("body", "")
-        pdf.set_font("Helvetica", "", 10)
+        pdf.set_font("DejaVuSans", "", 10)
         for line in body.split("\n"):
-            line = line.strip()
+            line = _clean_pdf_text(line.strip())
             if not line:
                 pdf.ln(2)
                 continue
             pdf.multi_cell(0, 5, line)
+            pdf.x = pdf.l_margin
 
     return bytes(pdf.output(dest="S"))
 
