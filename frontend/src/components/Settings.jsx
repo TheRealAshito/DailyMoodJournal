@@ -17,6 +17,22 @@ const CATEGORIES = [
 export default function Settings() {
   const { t, changeLocale } = useI18n()
   const { theme, setTheme } = useTheme()
+
+  async function extractBlobError(err) {
+    if (err.response?.data instanceof Blob) {
+      try {
+        const text = await err.response.data.text()
+        const json = JSON.parse(text)
+        if (typeof json.detail === 'string') return json.detail
+        if (Array.isArray(json.detail)) return json.detail[0]?.msg || text
+        return text
+      } catch {
+        return `HTTP ${err.response.status}`
+      }
+    }
+    return err.response?.data?.detail || err.message || 'Unknown error'
+  }
+
   const [settings, setSettings] = useState(null)
   const [oldPw, setOldPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -53,8 +69,9 @@ export default function Settings() {
       const a = document.createElement('a'); a.href = url
       a.download = `dailymood_export.${exportFmt === 'tar.gz' ? 'tar.gz' : 'zip'}`
       a.click(); window.URL.revokeObjectURL(url)
-    } catch {
-      alert('Export failed.')
+    } catch (err) {
+      const msg = await extractBlobError(err)
+      alert(`Export failed: ${msg}`)
     }
   }
 
@@ -69,8 +86,9 @@ export default function Settings() {
       const a = document.createElement('a'); a.href = obj
       a.download = 'dailymood_journal.pdf'
       a.click(); window.URL.revokeObjectURL(obj)
-    } catch {
-      alert('PDF export failed.')
+    } catch (err) {
+      const msg = await extractBlobError(err)
+      alert(`PDF export failed: ${msg}`)
     }
   }
 
