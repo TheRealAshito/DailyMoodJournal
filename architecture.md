@@ -20,7 +20,7 @@
 ```
 DailyMoodJournal/
 ├── backend/                  # FastAPI Python backend
-│   ├── main.py              # App entry, CORS, SPA catch-all route
+│   ├── main.py              # App entry, CORS, security headers (CSP, X-Frame-Options, etc.), SPA catch-all route
 │   ├── sessions.py          # In-memory session store (24h TTL)
 │   ├── routers/
 │   │   ├── auth.py          # Login, signup, password reset, /me, change password
@@ -33,24 +33,24 @@ DailyMoodJournal/
 │   ├── entry_crud.py        # CRUD on encrypted .enc files (preserves unknown fields)
 │   ├── export_import.py     # Build archives, PDF export (fpdf2), process imports
 │   ├── utils.py             # Path builders, YAML frontmatter (via PyYAML)
-│   ├── config.py            # Paths, user I/O, settings migration, mood maps
+│   ├── config.py            # Paths, user I/O, settings migration, mood maps, per-language tags
 │   └── prompts/
 │       └── cbt_prompts.py   # 12 cognitive distortions + 30 CBT prompts
 ├── frontend/                # React SPA (Vite + Tailwind)
 │   ├── public/locales/
-│   │   ├── en.json          # English translations (UI + 64 reflection prompts)
+│   │   ├── en.json          # English translations (UI + mood/days/months + 64 reflection prompts + 42 CBT keys)
 │   │   └── pt-BR.json       # Brazilian Portuguese translations
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── LoginPage.jsx / SignupPage.jsx / ResetPasswordPage.jsx
-│   │   │   ├── Navbar.jsx   # Top nav bar + theme toggle + language switcher
+│   │   │   ├── Navbar.jsx   # Top nav bar + theme toggle
 │   │   │   ├── Calendar.jsx # Mood-colored month grid — click a day opens new entry with that date pre-filled; heatmap shows most recent entry's mood color
-│   │   │   ├── EntryForm.jsx # New/edit entry + mood emojis + reflection prompts
+│   │   │   ├── EntryForm.jsx # New/edit entry + mood emojis + reflection prompts + tag toggle buttons
 │   │   │   ├── EntryCard.jsx # Read-only entry with edit/delete buttons
 │   │   │   ├── MoodSlider.jsx # Emoji-based mood selector (0-6) using String.fromCodePoint
 │   │   │   ├── Search.jsx   # Tag + date range filter with results
 │   │   │   ├── Stats.jsx    # recharts bar charts, streak counters, distribution
-│   │   │   ├── Settings.jsx # Theme, language, reflection categories, export/import, PDF, password
+│   │   │   ├── Settings.jsx # Theme, language, tag management (per-language), reflection categories, export/import, PDF, password
 │   │   │   └── AboutCBT.jsx # 12 cognitive distortions with examples
 │   │   ├── contexts/
 │   │   │   ├── AuthContext.jsx # login, signup, logout, session restore
@@ -200,27 +200,61 @@ Characters above U+FFFF (emoji supplementary plane) are stripped gracefully to p
 - **get_user_settings**: Falls back from `reflection_categories` → `cbt_enabled_categories` (migration path)
 - **save_user_settings**: Saves any key passed (not restricted to a fixed list)
 
+## Security
+
+### Headers
+
+Every response from the backend includes security headers applied by a Starlette `BaseHTTPMiddleware`:
+
+| Header | Value | Purpose |
+|--------|-------|---------|
+| `X-Content-Type-Options` | `nosniff` | Prevents MIME-type sniffing |
+| `X-Frame-Options` | `DENY` | Prevents clickjacking |
+| `Referrer-Policy` | `same-origin` | Only send Referer on same-origin requests |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'self'` | Restricts all resources to same-origin only |
+
+### 100% Local Design
+
+The app makes **zero external network calls**:
+- **Frontend**: All API requests go to `/api` (same origin). No CDN, no external fonts, no analytics scripts.
+- **Backend**: No HTTP/HTTPS client calls to any external service.
+- **Dependencies**: No telemetry/analytics packages in npm or Python dependencies.
+- **CORS**: Only allows `localhost` origins.
+- **Docker HEALTHCHECK**: Hits `http://localhost:8501/api/health` — container-internal only.
+- **Locale files**: Loaded via `fetch('/locales/{lang}.json')` from the same origin.
+
+### Export Filenames
+
+Archive and PDF filenames are localized based on the user's language setting:
+
+| Language | PDF file | Archive file |
+|----------|----------|--------------|
+| English | `dailymood_journal_{user}.pdf` | `dailymood_export_{user}_{ts}.tar.gz` |
+| Português | `diario_humor_{user}.pdf` | `exportacao_humor_{user}_{ts}.tar.gz` |
+
 ## Mood System
 
 | Mood | Label | Emoji | Color |
 |------|-------|-------|-------|
-| 0 | Terrible | 😞 | `#4a148c` |
-| 1 | Bad | 😢 | `#6a1b9a` |
-| 2 | Poor | 😕 | `#9c27b0` |
-| 3 | Okay | 😐 | `#9e9e9e` |
-| 4 | Good | 🙂 | `#66bb6a` |
-| 5 | Great | 😊 | `#43a047` |
-| 6 | Amazing | 🤩 | `#2e7d32` |
+| 0 | Terrible/Péssimo | 😞 | `#4a148c` |
+| 1 | Bad/Ruim | 😢 | `#6a1b9a` |
+| 2 | Poor/Fraco | 😕 | `#9c27b0` |
+| 3 | Okay/Neutro | 😐 | `#9e9e9e` |
+| 4 | Good/Bom | 🙂 | `#66bb6a` |
+| 5 | Great/Ótimo | 😊 | `#43a047` |
+| 6 | Amazing/Incrível | 🤩 | `#2e7d32` |
 
-Emoji characters use `String.fromCodePoint()` in JSX expressions to avoid encoding issues when pushing through GitHub's API.
+Emoji characters use `String.fromCodePoint()` in JSX expressions to avoid encoding issues when pushing through GitHub's API. Labels are fully localized via `t('mood_0')`–`t('mood_6')` keys.
 
 ## Frontend Architecture
 
 - **SPA routing**: FastAPI catch-all route `/{full_path:path}` serves `index.html` for all client-side routes
-- **Navigation**: Top navbar with tabs (Journal, New Entry, Search, Stats, About CBT, Settings)
+- **Navigation**: Top navbar with tabs (Journal, New Entry, Search, Stats, About CBT, Settings). Language switcher is only in Settings, not the navbar.
 - **Auth guard**: App.jsx checks `AuthContext.user` — unauthenticated users see login/signup/reset routes
-- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing. Contains ~180 keys including UI strings, 64 reflection prompts, and 42 CBT education keys (12 distortions × 3 fields + 6 headers).
+- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing. Contains ~210 keys including UI strings, mood labels (`mood_0`–`mood_6`), day names (`day_0`–`day_6`), month names (`month_0`–`month_11`), 64 reflection prompts, and 42 CBT education keys.
 - **Theme**: Tailwind `class` strategy — `dark` class on `<html>` via `ThemeContext`
+- **Date/time**: All timestamps use the browser's local timezone via `Date` getters (`getFullYear`, `getMonth`, `getDate`, `getHours`, `getMinutes`). No UTC `.toISOString()` is used.
+- **Tags**: Stored per-language as a dict `{"en": [...], "pt-BR": [...]}` in user settings. Defaults auto-populate for each language. Each language has its own independent tag set (e.g. "Happy" in EN, "Feliz" in PT-BR). Tags are displayed as clickable toggle buttons in EntryForm, managed in Settings.
 
 ## Deployment
 
