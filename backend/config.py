@@ -90,9 +90,9 @@ DEFAULT_TAGS = {
     ],
     "pt-BR": [
         "Feliz", "Triste", "Ansioso(a)", "Estressado(a)", "Calmo(a)", "Empolgado(a)",
-        "Bravo(a)", "Grato(a)", "Trabalho", "Estudo", "Exercício", "Social",
-        "Relaxar", "Criativo(a)", "Natureza", "Saúde", "Família", "Amigos",
-        "Metas", "Reflexão",
+        "Bravo(a)", "Grato(a)", "Trabalho", "Estudo", "Exerc\u00edcio", "Social",
+        "Relaxar", "Criativo(a)", "Natureza", "Sa\u00fade", "Fam\u00edlia", "Amigos",
+        "Metas", "Reflex\u00e3o",
     ],
 }
 
