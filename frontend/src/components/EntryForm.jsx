@@ -1,18 +1,11 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import api from '../api'
-import { useI18n } from '../i18n'
-import MoodSlider from './MoodSlider'
-
-const PROMPT_CATEGORIES = {
-  self_reflection: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-  gratitude: [0, 1, 2, 3, 4, 5, 6, 7],
-  growth_learning: [0, 1, 2, 3, 4, 5, 6, 7],
-  emotional_awareness: [0, 1, 2, 3, 4, 5, 6, 7],
-  relationships: [0, 1, 2, 3, 4, 5, 6, 7],
-  goals_purpose: [0, 1, 2, 3, 4, 5, 6, 7],
-  mindfulness: [0, 1, 2, 3, 4, 5, 6, 7],
-  resilience: [0, 1, 2, 3, 4, 5, 6, 7],
+function localDateStr(d) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+function localTimeStr(d) {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 export default function EntryForm() {
@@ -21,13 +14,14 @@ export default function EntryForm() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const urlDate = searchParams.get('date')
+  const now = new Date()
   const [settings, setSettings] = useState({ reflection_categories: ['self_reflection', 'gratitude', 'growth_learning', 'emotional_awareness'] })
   const [title, setTitle] = useState('')
   const [mood, setMood] = useState(3)
-  const [tags, setTags] = useState('')
+  const [selectedTags, setSelectedTags] = useState([])
   const [body, setBody] = useState('')
-  const [edate, setEdate] = useState(urlDate || new Date().toISOString().slice(0, 10))
-  const [etime, setEtime] = useState(new Date().toTimeString().slice(0, 5))
+  const [edate, setEdate] = useState(urlDate || localDateStr(now))
+  const [etime, setEtime] = useState(localTimeStr(now))
   const [includePrompts, setIncludePrompts] = useState(false)
   const [prompts, setPrompts] = useState([])
   const [responses, setResponses] = useState([])
@@ -51,14 +45,14 @@ export default function EntryForm() {
         const e = r.data
         setTitle(e.title || '')
         setMood(e.mood ?? 3)
-        setTags((e.tags || []).join(', '))
+        setSelectedTags(e.tags || [])
         setBody(e.body || '')
         try {
           const dt = new Date(e.date)
-          setEdate(dt.toISOString().slice(0, 10))
-          setEtime(dt.toTimeString().slice(0, 5))
+          setEdate(localDateStr(dt))
+          setEtime(localTimeStr(dt))
         } catch {
-          setEdate(e.date?.slice(0, 10) || new Date().toISOString().slice(0, 10))
+          setEdate(e.date?.slice(0, 10) || localDateStr(new Date()))
         }
       })
       .catch(() => setError('Failed to load entry.'))
@@ -85,7 +79,7 @@ export default function EntryForm() {
     if (!title.trim()) { setError('Title is required.'); return }
     setLoading(true)
 
-    const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean)
+    const tagList = selectedTags
     const dateTime = `${edate}T${etime}:00`
 
     let fullBody = body
@@ -149,8 +143,35 @@ export default function EntryForm() {
         <MoodSlider value={mood} onChange={setMood} disabled={false} />
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('tags')}</label>
-          <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="work, gratitude, reflection" className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          <label className="block text-sm font-medium mb-2">{t('tags')}</label>
+          <div className="flex flex-wrap gap-2">
+            {(settings.tags?.[settings.language] || settings.tags?.en || []).map((tag) => {
+              const active = selectedTags.includes(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => {
+                    if (active) {
+                      setSelectedTags(selectedTags.filter((t) => t !== tag))
+                    } else {
+                      setSelectedTags([...selectedTags, tag])
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    active
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'bg-custom-secondary border border-custom text-custom hover:border-purple-400'
+                  }`}
+                >
+                  {tag}
+                </button>
+              )
+            })}
+          </div>
+          {selectedTags.length > 0 && (
+            <p className="text-xs text-custom-muted mt-1">{selectedTags.join(', ')}</p>
+          )}
         </div>
 
         <div>

@@ -4,14 +4,14 @@ import { useI18n } from '../i18n'
 import { useTheme } from '../contexts/ThemeContext'
 
 const CATEGORIES = [
-  { key: 'self_reflection', label: 'Self-Reflection' },
-  { key: 'gratitude', label: 'Gratitude' },
-  { key: 'growth_learning', label: 'Growth & Learning' },
-  { key: 'emotional_awareness', label: 'Emotional Awareness' },
-  { key: 'relationships', label: 'Relationships' },
-  { key: 'goals_purpose', label: 'Goals & Purpose' },
-  { key: 'mindfulness', label: 'Mindfulness' },
-  { key: 'resilience', label: 'Resilience' },
+  { key: 'self_reflection' },
+  { key: 'gratitude' },
+  { key: 'growth_learning' },
+  { key: 'emotional_awareness' },
+  { key: 'relationships' },
+  { key: 'goals_purpose' },
+  { key: 'mindfulness' },
+  { key: 'resilience' },
 ]
 
 export default function Settings() {
@@ -41,6 +41,7 @@ export default function Settings() {
   const [exportFmt, setExportFmt] = useState('tar.gz')
   const [impMsg, setImpMsg] = useState('')
   const [impFiles, setImpFiles] = useState([])
+  const [newTag, setNewTag] = useState('')
   const [pdfFrom, setPdfFrom] = useState('')
   const [pdfTo, setPdfTo] = useState('')
   const fileRef = useRef(null)
@@ -56,39 +57,50 @@ export default function Settings() {
     try {
       await api.put('/auth/password', { old_password: oldPw, new_password: newPw })
       setPwMsg('Password changed!')
-      setOldPw(''); setNewPw(''); setConfirmPw('')
     } catch (err) {
-      setPwMsg(err.response?.data?.detail || 'Failed.')
+      const detail = err.response?.data?.detail
+      setPwMsg(detail || 'Failed to change password.')
     }
   }
 
   async function handleExport() {
     try {
       const r = await api.get(`/export?format=${exportFmt}`, { responseType: 'blob' })
-      const url = window.URL.createObjectURL(new Blob([r.data]))
-      const a = document.createElement('a'); a.href = url
-      a.download = `dailymood_export.${exportFmt === 'tar.gz' ? 'tar.gz' : 'zip'}`
-      a.click(); window.URL.revokeObjectURL(url)
+      const url = URL.createObjectURL(r.data)
+      const a = document.createElement('a')
+      const cd = r.headers['content-disposition']
+      const match = cd && cd.match(/filename="?([^";]+)"?/)
+      a.download = match ? match[1] : `export.${exportFmt}`
+      a.href = url
+      a.click()
+      URL.revokeObjectURL(url)
     } catch (err) {
       const msg = await extractBlobError(err)
-      alert(`Export failed: ${msg}`)
+      setExpMsg(msg || 'Export failed.')
     }
   }
 
   async function handleExportPDF() {
     try {
-      let url = '/export/pdf?'
-      if (pdfFrom) url += `from_date=${pdfFrom}&`
-      if (pdfTo) url += `to_date=${pdfTo}&`
+      let url = '/export/pdf'
+      if (pdfFrom || pdfTo) {
+        const p = new URLSearchParams()
+        if (pdfFrom) p.set('from_date', pdfFrom)
+        if (pdfTo) p.set('to_date', pdfTo)
+        url += '?' + p.toString()
+      }
       const r = await api.get(url, { responseType: 'blob' })
-      const blob = new Blob([r.data], { type: 'application/pdf' })
-      const obj = window.URL.createObjectURL(blob)
-      const a = document.createElement('a'); a.href = obj
-      a.download = 'dailymood_journal.pdf'
-      a.click(); window.URL.revokeObjectURL(obj)
+      const blobUrl = URL.createObjectURL(r.data)
+      const a = document.createElement('a')
+      const cd = r.headers['content-disposition']
+      const match = cd && cd.match(/filename="?([^";]+)"?/)
+      a.download = match ? match[1] : 'journal.pdf'
+      a.href = blobUrl
+      a.click()
+      URL.revokeObjectURL(blobUrl)
     } catch (err) {
       const msg = await extractBlobError(err)
-      alert(`PDF export failed: ${msg}`)
+      setExpMsg(msg || 'PDF export failed.')
     }
   }
 
@@ -118,6 +130,20 @@ export default function Settings() {
     api.put('/settings', { reflection_categories: updated }).catch(() => {})
   }
 
+  function handleAddTag() {
+    const tag = newTag.trim()
+    if (!tag) return
+    const lang = settings.language || 'en'
+    const current = settings.tags?.[lang] || settings.tags?.en || []
+    if (current.includes(tag)) return
+    const updated = [...current, tag]
+    const newTags = { ...settings.tags, [lang]: updated }
+    const newS = { ...settings, tags: newTags }
+    setSettings(newS)
+    setNewTag('')
+    api.put('/settings', { tags: newTags }).catch(() => {})
+  }
+
   if (!settings) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
 
   return (
@@ -138,7 +164,14 @@ export default function Settings() {
             {['en', 'pt-BR'].map((lang) => (
               <button
                 key={lang}
-                onClick={() => changeLocale(lang)}
+                onClick={async () => {
+                  changeLocale(lang)
+                  try {
+                    await api.put('/settings', { language: lang })
+                    const r = await api.get('/settings')
+                    setSettings(r.data)
+                  } catch {}
+                }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium ${settings.language === lang ? 'bg-purple-600 text-white' : 'border-custom bg-custom-secondary text-custom'}`}
               >
                 {lang === 'en' ? 'English' : 'Português'}
@@ -155,10 +188,53 @@ export default function Settings() {
               const active = (settings.reflection_categories || []).includes(cat.key)
               return (
                 <button key={cat.key} onClick={() => updateCategory(cat.key)} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${active ? 'bg-purple-600 text-white' : 'border border-custom text-custom'}`}>
-                  {cat.label}
+                  {t(cat.key)}
                 </button>
               )
             })}
+          </div>
+        </div>
+
+        <div className="card-bg border border-custom rounded-xl p-5">
+          <h3 className="font-semibold mb-3">🏷️ Tags</h3>
+          <p className="text-sm text-custom-muted mb-3">Manage your available tags. These appear as clickable buttons when writing an entry.</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {(settings.tags?.[settings.language] || settings.tags?.en || []).map((tag) => (
+              <span key={tag} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                {tag}
+                <button
+                  onClick={() => {
+                    const lang = settings.language || 'en'
+                    const current = settings.tags?.[lang] || settings.tags?.en || []
+                    const updated = current.filter((t) => t !== tag)
+                    const newTags = { ...settings.tags, [lang]: updated }
+                    const newS = { ...settings, tags: newTags }
+                    setSettings(newS)
+                    api.put('/settings', { tags: newTags }).catch(() => {})
+                  }}
+                  className="ml-0.5 hover:text-red-500 transition-colors"
+                  title="Remove tag"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleAddTag()
+                }
+              }}
+              placeholder="New tag name"
+              className="flex-1 px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <button onClick={handleAddTag} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">Add</button>
           </div>
         </div>
 

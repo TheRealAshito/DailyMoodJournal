@@ -5,8 +5,8 @@ import { useI18n } from '../i18n'
 import EntryCard from './EntryCard'
 
 const MOOD_COLORS = ['#4a148c', '#6a1b9a', '#9c27b0', '#9e9e9e', '#66bb6a', '#43a047', '#2e7d32']
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+
+const DAY_KEYS = ['day_0','day_1','day_2','day_3','day_4','day_5','day_6']
 
 function getMonthGrid(year, month) {
   const firstDay = new Date(year, month, 1)
@@ -27,6 +27,10 @@ function getMonthGrid(year, month) {
   return grid
 }
 
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
 export default function Calendar() {
   const { t } = useI18n()
   const navigate = useNavigate()
@@ -35,7 +39,7 @@ export default function Calendar() {
   const [month, setMonth] = useState(today.getMonth())
   const [entries, setEntries] = useState([])
   const [moodByDay, setMoodByDay] = useState({})
-  const [selectedDate, setSelectedDate] = useState(today.toISOString().slice(0, 10))
+  const [selectedDate, setSelectedDate] = useState(localDateStr(today))
   const [dayEntries, setDayEntries] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -93,7 +97,7 @@ export default function Calendar() {
 
       <div className="flex items-center justify-between mb-4">
         <button onClick={prevMonth} className="px-3 py-1 rounded-lg text-sm border-custom bg-custom-secondary text-custom hover-bg">{t('prev')}</button>
-        <h2 className="text-lg font-semibold">{MONTHS[month]} {year}</h2>
+        <h2 className="text-lg font-semibold">{t(`month_${month}`)} {year}</h2>
         <button onClick={nextMonth} className="px-3 py-1 rounded-lg text-sm border-custom bg-custom-secondary text-custom hover-bg">{t('next')}</button>
       </div>
 
@@ -101,15 +105,15 @@ export default function Calendar() {
         <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
       ) : (
         <div className="grid grid-cols-7 gap-1.5 mb-6">
-          {DAYS.map((day) => (
-            <div key={day} className="text-center text-xs text-custom-muted font-medium py-2">{day}</div>
+          {DAY_KEYS.map((k) => (
+            <div key={k} className="text-center text-xs text-custom-muted font-medium py-2">{t(k)}</div>
           ))}
           {grid.flat().map((day, i) => {
             if (day === null) return <div key={`empty-${i}`} />
             const mood = dayMood(day)
             const color = mood !== null ? MOOD_COLORS[mood] : 'transparent'
             const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-            const isToday = dateKey === today.toISOString().slice(0, 10)
+            const isToday = dateKey === localDateStr(today)
             return (
               <button
                 key={`day-${day}`}
