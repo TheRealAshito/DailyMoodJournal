@@ -3,6 +3,7 @@ from fastapi.responses import Response
 from datetime import date, datetime
 from backend.export_import import build_export_archive, build_pdf_export, process_import_files
 from backend.routers.auth import _get_session
+from backend.config import get_user_settings, EXPORT_NAMES
 
 router = APIRouter(prefix="/api/export", tags=["export"])
 
@@ -20,10 +21,13 @@ def export_entries(request: Request, format: str = Query("tar.gz", pattern=r"^(t
     ext = "tar.gz" if format == "tar.gz" else "zip"
     mime = "application/gzip" if format == "tar.gz" else "application/zip"
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    settings = get_user_settings(session["username"])
+    lang = settings.get("language", "en")
+    base_name = EXPORT_NAMES.get(lang, EXPORT_NAMES["en"])["export"]
     return Response(
         content=data,
         media_type=mime,
-        headers={"Content-Disposition": f"attachment; filename=dailymood_export_{session['username']}_{ts}.{ext}"},
+        headers={"Content-Disposition": f"attachment; filename={base_name}_{session['username']}_{ts}.{ext}"},
     )
 
 
@@ -46,10 +50,13 @@ def export_pdf(request: Request, from_date: str = Query(""), to_date: str = Quer
     if data is None:
         raise HTTPException(404, "No entries to export")
 
+    settings = get_user_settings(session["username"])
+    lang = settings.get("language", "en")
+    base_name = EXPORT_NAMES.get(lang, EXPORT_NAMES["en"])["journal"]
     return Response(
         content=data,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=dailymood_journal_{session['username']}.pdf"},
+        headers={"Content-Disposition": f"attachment; filename={base_name}_{session['username']}.pdf"},
     )
 
 

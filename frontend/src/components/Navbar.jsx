@@ -15,7 +15,7 @@ const NAV_ITEMS = [
 export default function Navbar() {
   const { user, logout } = useAuth()
   const { theme, setTheme } = useTheme()
-  const { t, locale, changeLocale } = useI18n()
+  const { t } = useI18n()
   const navigate = useNavigate()
 
   async function handleLogout() {
@@ -57,21 +57,6 @@ export default function Navbar() {
           >
             {theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}
           </button>
-
-          <div className="flex gap-0.5">
-            <button
-              onClick={() => changeLocale('en')}
-              className={`px-1.5 py-1 rounded text-xs font-medium ${locale === 'en' ? 'bg-purple-600 text-white' : 'text-custom-muted hover-bg'}`}
-            >
-              EN
-            </button>
-            <button
-              onClick={() => changeLocale('pt-BR')}
-              className={`px-1.5 py-1 rounded text-xs font-medium ${locale === 'pt-BR' ? 'bg-purple-600 text-white' : 'text-custom-muted hover-bg'}`}
-            >
-              PT
-            </button>
-          </div>
 
           <button onClick={handleLogout} className="px-2 py-1.5 rounded-lg text-sm text-red-500 hover-bg" title="Logout">
             {String.fromCodePoint(0x1F6AA)}

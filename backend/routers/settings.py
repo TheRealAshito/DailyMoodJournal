@@ -10,6 +10,7 @@ class SettingsUpdate(BaseModel):
     theme: str | None = None
     language: str | None = None
     reflection_categories: list[str] | None = None
+    tags: dict | None = None
 
 
 @router.get("")
@@ -33,6 +34,8 @@ def update_settings(request: Request, body: SettingsUpdate):
         updates["language"] = body.language
     if body.reflection_categories is not None:
         updates["reflection_categories"] = body.reflection_categories
+    if body.tags is not None:
+        updates["tags"] = body.tags
 
     save_user_settings(session["username"], updates)
     return get_user_settings(session["username"])

@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useI18n } from '../i18n'
 const MOOD_COLORS = ['#4a148c', '#6a1b9a', '#9c27b0', '#9e9e9e', '#66bb6a', '#43a047', '#2e7d32']
-const MOOD_LABELS = ['Terrible', 'Bad', 'Poor', 'Okay', 'Good', 'Great', 'Amazing']
 
 export default function EntryCard({ entry }) {
   const { t } = useI18n()
@@ -27,7 +26,7 @@ export default function EntryCard({ entry }) {
           <p className="text-xs text-custom-muted">{entry.date}</p>
         </div>
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium text-white" style={{ backgroundColor: MOOD_COLORS[mood] }}>
-          {MOOD_LABELS[mood]} ({mood})
+          {t(`mood_${mood}`)} ({mood})
         </span>
       </div>
       {entry.tags && entry.tags.length > 0 && (

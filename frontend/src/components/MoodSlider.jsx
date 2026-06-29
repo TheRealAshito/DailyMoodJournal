@@ -1,10 +1,12 @@
+import { useI18n } from '../i18n'
+
 const MOOD_EMOJIS = ['\u{1F61E}', '\u{1F622}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F60A}', '\u{1F929}']
-const MOOD_LABELS = ['Terrible', 'Bad', 'Poor', 'Okay', 'Good', 'Great', 'Amazing']
 
 export default function MoodSlider({ value, onChange, disabled }) {
+  const { t } = useI18n()
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium">Mood</label>
+      <label className="block text-sm font-medium">{t('mood')}</label>
       <div className="flex items-center gap-1">
         {MOOD_EMOJIS.map((emoji, i) => (
           <button
@@ -17,10 +19,10 @@ export default function MoodSlider({ value, onChange, disabled }) {
                 ? 'ring-2 ring-purple-500 scale-110'
                 : 'hover:scale-105 opacity-60 hover:opacity-100'
             }`}
-            title={`${i} — ${MOOD_LABELS[i]}`}
+            title={`${i} — ${t(`mood_${i}`)}`}
           >
             <span className="text-2xl">{emoji}</span>
-            <span className="text-xs text-custom-muted">{MOOD_LABELS[i]}</span>
+            <span className="text-xs text-custom-muted">{t(`mood_${i}`)}</span>
           </button>
         ))}
       </div>

@@ -82,6 +82,25 @@ def save_master_key(key: bytes):
     os.chmod(MASTER_KEY_FILE, 0o600)
 
 
+DEFAULT_TAGS = {
+    "en": [
+        "Happy", "Sad", "Anxious", "Stressed", "Calm", "Excited", "Angry", "Grateful",
+        "Work", "Study", "Exercise", "Social", "Relax", "Creative", "Nature", "Health",
+        "Family", "Friends", "Goals", "Reflection",
+    ],
+    "pt-BR": [
+        "Feliz", "Triste", "Ansioso(a)", "Estressado(a)", "Calmo(a)", "Empolgado(a)",
+        "Bravo(a)", "Grato(a)", "Trabalho", "Estudo", "Exercício", "Social",
+        "Relaxar", "Criativo(a)", "Natureza", "Saúde", "Família", "Amigos",
+        "Metas", "Reflexão",
+    ],
+}
+
+EXPORT_NAMES = {
+    "en": {"journal": "dailymood_journal", "export": "dailymood_export"},
+    "pt-BR": {"journal": "diario_humor", "export": "exportacao_humor"},
+}
+
 AUTH_KEYS = {
     "salt", "password_hash", "entry_key_encrypted_with_pwd",
     "entry_key_salt_pwd", "entry_key_encrypted_with_secret",
@@ -89,7 +108,7 @@ AUTH_KEYS = {
     "theme", "language", "reflection_categories", "cbt_enabled_categories",
 }
 
-KNOWN_SETTINGS = {"theme", "language", "reflection_categories"}
+KNOWN_SETTINGS = {"theme", "language", "reflection_categories", "tags"}
 
 
 def get_user_settings(username: str) -> dict:
@@ -101,10 +120,15 @@ def get_user_settings(username: str) -> dict:
         "reflection_categories": user.get("reflection_categories",
             user.get("cbt_enabled_categories",
                 ["self_reflection", "gratitude", "growth_learning", "emotional_awareness"])),
+        "tags": user.get("tags", DEFAULT_TAGS),
     }
     for key, value in user.items():
         if key not in AUTH_KEYS and key not in settings:
             settings[key] = value
+    # Ensure all known languages have tag entries
+    for lang in DEFAULT_TAGS:
+        if lang not in settings["tags"]:
+            settings["tags"][lang] = list(DEFAULT_TAGS[lang])
     return settings
 
 
