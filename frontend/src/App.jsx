@@ -1,9 +1,12 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
+import { useI18n } from './i18n'
 import Navbar from './components/Navbar'
 import LoginPage from './components/LoginPage'
 import SignupPage from './components/SignupPage'
 import ResetPasswordPage from './components/ResetPasswordPage'
+import HowToUse from './components/HowToUse'
 import Calendar from './components/Calendar'
 import EntryForm from './components/EntryForm'
 import Search from './components/Search'
@@ -24,6 +27,7 @@ function ProtectedLayout() {
           <Route path="stats" element={<Stats />} />
           <Route path="settings" element={<Settings />} />
           <Route path="about-cbt" element={<AboutCBT />} />
+          <Route path="how-to-use" element={<HowToUse />} />
         </Routes>
       </main>
     </div>
@@ -32,6 +36,14 @@ function ProtectedLayout() {
 
 export default function App() {
   const { user, loading } = useAuth()
+  const { changeLocale } = useI18n()
+
+  // Sync locale from backend settings whenever user state changes
+  useEffect(() => {
+    if (user?.settings?.language) {
+      changeLocale(user.settings.language)
+    }
+  }, [user?.settings?.language])
 
   if (loading) {
     return (

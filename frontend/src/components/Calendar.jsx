@@ -85,71 +85,125 @@ export default function Calendar() {
   }
 
   const grid = getMonthGrid(year, month)
+  const todayStr = localDateStr(today)
 
   return (
-    <div>
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">{t('journal')}</h1>
-        <button onClick={() => navigate('/new')} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
-          {t('new_entry')}
+        <div>
+          <h1 className="text-2xl font-bold text-custom">{t('journal')}</h1>
+          <p className="text-sm text-custom-muted mt-0.5">{t('total_entries')}: {entries.length}</p>
+        </div>
+        <button onClick={() => navigate('/new')} className="px-5 py-2.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-all shadow-sm hover:shadow-md active:scale-95">
+          + {t('new_entry')}
         </button>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={prevMonth} className="px-3 py-1 rounded-lg text-sm border-custom bg-custom-secondary text-custom hover-bg">{t('prev')}</button>
-        <h2 className="text-lg font-semibold">{t(`month_${month}`)} {year}</h2>
-        <button onClick={nextMonth} className="px-3 py-1 rounded-lg text-sm border-custom bg-custom-secondary text-custom hover-bg">{t('next')}</button>
+      {/* Calendar card */}
+      <div className="card-bg border border-custom rounded-2xl p-5 mb-6 shadow-sm">
+        {/* Month navigator */}
+        <div className="flex items-center justify-between mb-5">
+          <button onClick={prevMonth} className="w-9 h-9 flex items-center justify-center rounded-xl border border-custom bg-custom-secondary text-custom hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 transition-all">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          </button>
+
+          <div className="text-center">
+            <h2 className="text-lg font-bold text-custom">{t(`month_${month}`)} <span className="text-custom-muted font-normal">{year}</span></h2>
+          </div>
+
+          <button onClick={nextMonth} className="w-9 h-9 flex items-center justify-center rounded-xl border border-custom bg-custom-secondary text-custom hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 transition-all">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-16"><div className="w-7 h-7 border-[3px] border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
+        ) : (
+          <>
+            {/* Day headers */}
+            <div className="grid grid-cols-7 mb-2">
+              {DAY_KEYS.map((k) => (
+                <div key={k} className="text-center text-xs font-semibold text-custom-muted uppercase tracking-wide py-1">{t(k)}</div>
+              ))}
+            </div>
+
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-1">
+              {grid.flat().map((day, i) => {
+                if (day === null) return <div key={`empty-${i}`} />
+
+                const mood = dayMood(day)
+                const color = mood !== null ? MOOD_COLORS[mood] : null
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                const isToday = dateKey === todayStr
+                const isSelected = dateKey === selectedDate
+
+                return (
+                  <button
+                    key={`day-${day}`}
+                    onClick={() => setSelectedDate(dateKey)}
+                    onDoubleClick={() => navigate(`/new?date=${dateKey}`)}
+                    className={`
+                      relative flex flex-col items-center justify-center py-2 rounded-xl text-sm font-medium transition-all
+                      ${isSelected ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'hover:bg-custom-secondary'}
+                      ${isToday && !isSelected ? 'ring-1 ring-purple-300' : ''}
+                    `}
+                  >
+                    <span className={`${isToday ? 'text-purple-600 font-bold' : 'text-custom'}`}>{day}</span>
+                    {color && (
+                      <span
+                        className="mt-1 w-2 h-2 rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
-      ) : (
-        <div className="grid grid-cols-7 gap-1.5 mb-6">
-          {DAY_KEYS.map((k) => (
-            <div key={k} className="text-center text-xs text-custom-muted font-medium py-2">{t(k)}</div>
-          ))}
-          {grid.flat().map((day, i) => {
-            if (day === null) return <div key={`empty-${i}`} />
-            const mood = dayMood(day)
-            const color = mood !== null ? MOOD_COLORS[mood] : 'transparent'
-            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-            const isToday = dateKey === localDateStr(today)
-            return (
-              <button
-                key={`day-${day}`}
-                onClick={() => navigate(`/new?date=${dateKey}`)}
-                className="calendar-cell aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-medium transition-all hover:ring-2 hover:ring-purple-400"
-                style={{ backgroundColor: mood !== null ? color : undefined }}
-              >
-                <span className={mood !== null || isToday ? 'text-white drop-shadow-md' : 'text-custom'}>{day}</span>
-                {isToday && !mood && <div className="w-1 h-1 rounded-full bg-purple-600 mt-0.5" />}
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* Mood legend */}
+      <div className="flex flex-wrap items-center gap-3 mb-6 px-1">
+        <span className="text-xs font-medium text-custom-muted mr-1">{t('mood')}:</span>
         {MOOD_COLORS.map((color, i) => (
-          <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-white" style={{ backgroundColor: color }}>{i}</span>
+          <span key={i} className="inline-flex items-center gap-1.5 text-xs text-custom-muted">
+            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+            {i}
+          </span>
         ))}
       </div>
 
+      {/* Selected day entries */}
       <div className="mb-4">
-        <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" />
-      </div>
-
-      <h3 className="font-semibold mb-3">{t('entries_for')} {selectedDate}</h3>
-
-      {dayEntries.length === 0 ? (
-        <p className="text-custom-muted text-sm">{t('no_entries')} <button onClick={() => navigate('/new')} className="text-purple-600 hover:underline">{t('write_one')}</button></p>
-      ) : (
-        <div className="space-y-3">
-          {dayEntries.map((entry) => (
-            <EntryCard key={entry.path} entry={entry} />
-          ))}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-custom">
+            {t('entries_for')}
+            <span className="ml-2 text-custom-muted font-normal text-sm">{selectedDate}</span>
+          </h3>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-3 py-1.5 rounded-xl border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
         </div>
-      )}
+
+        {dayEntries.length === 0 ? (
+          <div className="card-bg border border-custom rounded-2xl p-8 text-center">
+            <p className="text-custom-muted text-sm mb-3">{t('no_entries')}</p>
+            <button onClick={() => navigate('/new')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">{t('write_one')}</button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {dayEntries.map((entry) => (
+              <EntryCard key={entry.path} entry={entry} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

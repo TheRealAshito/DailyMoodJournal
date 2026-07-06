@@ -1,3 +1,20 @@
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import api from '../api'
+import { useI18n } from '../i18n'
+import MoodSlider from './MoodSlider'
+
+const PROMPT_CATEGORIES = {
+  self_reflection: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  gratitude: [0, 1, 2, 3, 4, 5, 6, 7],
+  growth_learning: [0, 1, 2, 3, 4, 5, 6, 7],
+  emotional_awareness: [0, 1, 2, 3, 4, 5, 6, 7],
+  relationships: [0, 1, 2, 3, 4, 5, 6, 7],
+  goals_purpose: [0, 1, 2, 3, 4, 5, 6, 7],
+  mindfulness: [0, 1, 2, 3, 4, 5, 6, 7],
+  resilience: [0, 1, 2, 3, 4, 5, 6, 7],
+}
+
 function localDateStr(d) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -25,6 +42,7 @@ export default function EntryForm() {
   const [includePrompts, setIncludePrompts] = useState(false)
   const [prompts, setPrompts] = useState([])
   const [responses, setResponses] = useState([])
+  const [scaleValues, setScaleValues] = useState({})
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(!!encodedPath)
@@ -47,6 +65,7 @@ export default function EntryForm() {
         setMood(e.mood ?? 3)
         setSelectedTags(e.tags || [])
         setBody(e.body || '')
+        setScaleValues(e.scales || {})
         try {
           const dt = new Date(e.date)
           setEdate(localDateStr(dt))
@@ -96,7 +115,7 @@ export default function EntryForm() {
       fullBody = lines.join('\n') + '\n\n' + fullBody
     }
 
-    const payload = { title: title.trim(), date: dateTime, mood, tags: tagList, body: fullBody }
+    const payload = { title: title.trim(), date: dateTime, mood, tags: tagList, body: fullBody, scales: scaleValues }
 
     try {
       if (isEditing) {
@@ -141,6 +160,32 @@ export default function EntryForm() {
         </div>
 
         <MoodSlider value={mood} onChange={setMood} disabled={false} />
+
+        {(settings.custom_scales || []).length > 0 && (
+          <div className="space-y-4">
+            {(settings.custom_scales || []).map((scale) => (
+              <div key={scale.name}>
+                <label className="block text-sm font-medium mb-1">
+                  {scale.name}
+                  <span className="ml-2 text-xs text-custom-muted">{scaleValues[scale.name] ?? Math.round((scale.min + scale.max) / 2)} / {scale.max}</span>
+                </label>
+                <input
+                  type="range"
+                  min={scale.min}
+                  max={scale.max}
+                  step={scale.step || 1}
+                  value={scaleValues[scale.name] ?? Math.round((scale.min + scale.max) / 2)}
+                  onChange={(e) => setScaleValues({ ...scaleValues, [scale.name]: parseInt(e.target.value, 10) })}
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-custom-secondary accent-purple-600"
+                />
+                <div className="flex justify-between text-xs text-custom-muted mt-0.5">
+                  <span>{scale.min}</span>
+                  <span>{scale.max}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium mb-2">{t('tags')}</label>

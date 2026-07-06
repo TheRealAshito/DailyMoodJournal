@@ -21,7 +21,7 @@ def get_stats(request: Request, period: str = Query("30d")):
     if not entries:
         return {"total_entries": 0, "avg_mood": 0, "current_streak": 0, "longest_streak": 0, "mood_by_date": [], "mood_distribution": []}
 
-    by_date = defaultdict(lambda: {"moods": [], "count": 0})
+    by_date = defaultdict(lambda: {"moods": [], "count": 0, "scales": defaultdict(list)})
     all_dates = []
 
     for path in entries:
@@ -35,6 +35,11 @@ def get_stats(request: Request, period: str = Query("30d")):
             date_key = dt.date()
             by_date[date_key]["moods"].append(entry.get("mood", 3))
             by_date[date_key]["count"] += 1
+            # Collect custom scale values
+            scales = entry.get("scales", {})
+            if isinstance(scales, dict):
+                for scale_name, scale_val in scales.items():
+                    by_date[date_key]["scales"][scale_name].append(scale_val)
         except Exception:
             continue
 
@@ -49,6 +54,7 @@ def get_stats(request: Request, period: str = Query("30d")):
     longest_streak = _calc_longest_streak(dates)
 
     mood_by_date = []
+    scales_by_date = defaultdict(list)
     for d in dates:
         moods = by_date[d]["moods"]
         mood_by_date.append({
@@ -57,6 +63,14 @@ def get_stats(request: Request, period: str = Query("30d")):
             "count": by_date[d]["count"],
             "label": d.strftime("%b %d"),
         })
+        # Aggregate scale values per date
+        for scale_name, vals in by_date[d]["scales"].items():
+            if vals:
+                scales_by_date[scale_name].append({
+                    "date": d.isoformat(),
+                    "value": round(sum(vals) / len(vals), 1),
+                    "label": d.strftime("%b %d"),
+                })
 
     mood_dist = []
     for m in range(7):
@@ -69,6 +83,7 @@ def get_stats(request: Request, period: str = Query("30d")):
         "longest_streak": longest_streak,
         "mood_by_date": mood_by_date,
         "mood_distribution": mood_dist,
+        "scales_by_date": dict(scales_by_date),
     }
 
 

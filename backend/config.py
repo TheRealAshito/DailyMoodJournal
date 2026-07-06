@@ -108,7 +108,7 @@ AUTH_KEYS = {
     "theme", "language", "reflection_categories", "cbt_enabled_categories",
 }
 
-KNOWN_SETTINGS = {"theme", "language", "reflection_categories", "tags"}
+KNOWN_SETTINGS = {"theme", "language", "reflection_categories", "tags", "custom_scales"}
 
 
 def get_user_settings(username: str) -> dict:

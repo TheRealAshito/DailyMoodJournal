@@ -4,14 +4,12 @@ const I18nContext = createContext(null)
 
 const LOCALE_CACHE = {}
 
-export function I18nProvider({ children }) {
-  const [locale, setLocale] = useState('en')
-  const [messages, setMessages] = useState({})
+// Read from localStorage synchronously so the very first render uses the right locale
+const storedLang = localStorage.getItem('dailymood_language') || 'en'
 
-  useEffect(() => {
-    const stored = localStorage.getItem('dailymood_language') || 'en'
-    setLocale(stored)
-  }, [])
+export function I18nProvider({ children }) {
+  const [locale, setLocale] = useState(storedLang)
+  const [messages, setMessages] = useState({})
 
   useEffect(() => {
     if (LOCALE_CACHE[locale]) {

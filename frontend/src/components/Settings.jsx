@@ -42,6 +42,8 @@ export default function Settings() {
   const [impMsg, setImpMsg] = useState('')
   const [impFiles, setImpFiles] = useState([])
   const [newTag, setNewTag] = useState('')
+  const [newScaleName, setNewScaleName] = useState('')
+  const [newScaleMax, setNewScaleMax] = useState(10)
   const [pdfFrom, setPdfFrom] = useState('')
   const [pdfTo, setPdfTo] = useState('')
   const fileRef = useRef(null)
@@ -144,6 +146,22 @@ export default function Settings() {
     api.put('/settings', { tags: newTags }).catch(() => {})
   }
 
+  function handleAddScale() {
+    const name = newScaleName.trim()
+    if (!name) return
+    const max = parseInt(newScaleMax, 10)
+    if (isNaN(max) || max < 1 || max > 100) return
+    const current = settings.custom_scales || []
+    if (current.some((s) => s.name.toLowerCase() === name.toLowerCase())) return
+    const scale = { name, min: 0, max, step: 1 }
+    const updated = [...current, scale]
+    const newS = { ...settings, custom_scales: updated }
+    setSettings(newS)
+    setNewScaleName('')
+    setNewScaleMax(10)
+    api.put('/settings', { custom_scales: updated }).catch(() => {})
+  }
+
   if (!settings) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
 
   return (
@@ -235,6 +253,63 @@ export default function Settings() {
               className="flex-1 px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
             <button onClick={handleAddTag} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">Add</button>
+          </div>
+        </div>
+
+        <div className="card-bg border border-custom rounded-xl p-5">
+          <h3 className="font-semibold mb-3">📊 Custom Scales</h3>
+          <p className="text-sm text-custom-muted mb-3">Add custom numeric scales (e.g. Anxiety, Energy) to rate alongside mood on every entry.</p>
+
+          {(settings.custom_scales || []).length > 0 && (
+            <div className="space-y-2 mb-3">
+              {(settings.custom_scales || []).map((scale, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-custom-secondary border border-custom text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium text-custom">{scale.name}</span>
+                    <span className="text-xs text-custom-muted">{scale.min}–{scale.max}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const updated = (settings.custom_scales || []).filter((_, idx) => idx !== i)
+                      const newS = { ...settings, custom_scales: updated }
+                      setSettings(newS)
+                      api.put('/settings', { custom_scales: updated }).catch(() => {})
+                    }}
+                    className="text-red-500 hover:text-red-700 text-lg leading-none"
+                    title="Remove scale"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2 flex-wrap items-end">
+            <div className="flex-1 min-w-[140px]">
+              <label className="block text-xs text-custom-muted mb-1">Name</label>
+              <input
+                type="text"
+                value={newScaleName}
+                onChange={(e) => setNewScaleName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddScale() } }}
+                placeholder="e.g. Anxiety"
+                className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+            <div className="w-20">
+              <label className="block text-xs text-custom-muted mb-1">Max</label>
+              <input
+                type="number"
+                value={newScaleMax}
+                onChange={(e) => setNewScaleMax(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddScale() } }}
+                min="1"
+                max="100"
+                className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+            <button onClick={handleAddScale} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">Add</button>
           </div>
         </div>
 

@@ -36,6 +36,7 @@ class EntryCreate(BaseModel):
     mood: int
     tags: list[str] = []
     body: str = ""
+    scales: dict = {}
 
 
 class EntryUpdate(BaseModel):
@@ -44,6 +45,7 @@ class EntryUpdate(BaseModel):
     mood: int
     tags: list[str] = []
     body: str = ""
+    scales: dict = {}
 
 
 def _format_entry(entry: dict) -> dict:
@@ -55,6 +57,7 @@ def _format_entry(entry: dict) -> dict:
         "body": entry.get("body", ""),
         "author": entry.get("author", ""),
         "path": entry.get("path", ""),
+        "scales": entry.get("scales", {}),
         "mood_color": MOOD_COLORS.get(entry.get("mood", 3), MOOD_COLORS[3]),
         "mood_label": MOOD_LABELS.get(entry.get("mood", 3), "Unknown"),
     }
@@ -101,6 +104,7 @@ def create_new_entry(request: Request, body: EntryCreate):
         "mood": body.mood,
         "tags": body.tags,
         "body": body.body,
+        "scales": body.scales,
     }
     path = create_entry(session["username"], entry_data, session["user_key"])
     entry = get_entry(path, session["user_key"])
@@ -166,6 +170,7 @@ def edit_entry(request: Request, path: str, body: EntryUpdate):
         "mood": body.mood,
         "tags": body.tags,
         "body": body.body,
+        "scales": body.scales,
         "author": session["username"],
     }
     update_entry(full_path, entry_data, session["user_key"])

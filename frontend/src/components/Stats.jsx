@@ -98,6 +98,32 @@ export default function Stats() {
           </ResponsiveContainer>
         </div>
       )}
+
+      {stats.scales_by_date && Object.keys(stats.scales_by_date).length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Custom Scales</h2>
+          {Object.entries(stats.scales_by_date).map(([scaleName, data]) => (
+            <div key={scaleName} className="card-bg border border-custom rounded-xl p-4 mb-4">
+              <h3 className="font-semibold mb-4">{scaleName}</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={data}>
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={60} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip content={({ active, payload, label }) =>
+                    active && payload?.length ? (
+                      <div className="card-bg border border-custom rounded-lg p-2 text-sm shadow-lg">
+                        <p className="font-medium">{label}</p>
+                        <p className="text-custom-muted">{scaleName}: {payload[0].value}</p>
+                      </div>
+                    ) : null
+                  } />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="#7c3aed" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
