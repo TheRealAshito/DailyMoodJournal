@@ -146,14 +146,13 @@ export default function Calendar() {
                     onDoubleClick={() => navigate(`/new?date=${dateKey}`)}
                     className={`
                       relative flex flex-col items-center justify-center py-2 rounded-xl text-sm font-medium transition-all
-                      ${isSelected ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'hover:bg-custom-secondary'}
+                      ${isSelected ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900/20' : color ? 'ring-2' : ''}
                       ${isToday && !isSelected ? 'ring-1 ring-purple-300' : ''}
+                      ${!isSelected && !isToday ? 'hover:bg-custom-secondary' : ''}
                     `}
+                    style={color && !isSelected ? { '--tw-ring-color': color } : {}}
                   >
                     <span className={`${isToday ? 'text-purple-600 font-bold' : 'text-custom'}`}>{day}</span>
-                    {color && (
-                      <div className="absolute bottom-0 left-2 right-2 h-[3px] rounded-full" style={{ backgroundColor: color }} />
-                    )}
                   </button>
                 )
               })}
