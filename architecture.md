@@ -44,14 +44,15 @@ DailyMoodJournal/
 │   │   ├── components/
 │   │   │   ├── LoginPage.jsx / SignupPage.jsx / ResetPasswordPage.jsx
 │   │   │   ├── Navbar.jsx   # Top nav bar + theme toggle
-│   │   │   ├── Calendar.jsx # Mood-colored month grid — click a day opens new entry with that date pre-filled; heatmap shows most recent entry's mood color
-│   │   │   ├── EntryForm.jsx # New/edit entry + mood emojis + reflection prompts + tag toggle buttons
+|   │   │   ├── Calendar.jsx # Custom month grid with mood-colored bottom accent bar per day cell, selected/today highlighting, double-click creates entry, date picker
+|   │   │   ├── EntryForm.jsx # New/edit entry + mood emojis + reflection prompts + tag toggle buttons + custom scale sliders
 │   │   │   ├── EntryCard.jsx # Read-only entry with edit/delete buttons
 │   │   │   ├── MoodSlider.jsx # Emoji-based mood selector (0-6) using String.fromCodePoint
 │   │   │   ├── Search.jsx   # Tag + date range filter with results
-│   │   │   ├── Stats.jsx    # recharts bar charts, streak counters, distribution
-│   │   │   ├── Settings.jsx # Theme, language, tag management (per-language), reflection categories, export/import, PDF, password
-│   │   │   └── AboutCBT.jsx # 12 cognitive distortions with examples
+|   │   │   ├── Stats.jsx    # recharts bar charts, streak counters, distribution, custom scales bar charts (scales_by_date)
+|   │   │   ├── Settings.jsx # Theme, language, tag management (per-language), reflection categories, custom scales (add/remove), export/import, PDF, password
+|   │   │   ├── HowToUse.jsx # 6-section how-to guide (entries, scales, tags, calendar, export, settings)
+|   │   │   └── AboutCBT.jsx # 12 cognitive distortions with examples
 │   │   ├── contexts/
 │   │   │   ├── AuthContext.jsx # login, signup, logout, session restore
 │   │   │   └── ThemeContext.jsx # dark/light via Tailwind class
@@ -249,13 +250,14 @@ Emoji characters use `String.fromCodePoint()` in JSX expressions to avoid encodi
 ## Frontend Architecture
 
 - **SPA routing**: FastAPI catch-all route `/{full_path:path}` serves `index.html` for all client-side routes
-- **Navigation**: Top navbar with tabs (Journal, New Entry, Search, Stats, About CBT, Settings). Language switcher is only in Settings, not the navbar.
+- **Navigation**: Top navbar with tabs (Journal, New Entry, How to Use, Search, Stats, About CBT, Settings). Theme toggle is in the navbar; language switcher is in Settings.
 - **Auth guard**: App.jsx checks `AuthContext.user` — unauthenticated users see login/signup/reset routes
-- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing. Contains ~210 keys including UI strings, mood labels (`mood_0`–`mood_6`), day names (`day_0`–`day_6`), month names (`month_0`–`month_11`), 64 reflection prompts, and 42 CBT education keys.
+- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing. Contains ~225 keys including UI strings, mood labels (`mood_0`–`mood_6`), day names (`day_0`–`day_6`), month names (`month_0`–`month_11`), 64 reflection prompts, 42 CBT education keys, and how-to-use section keys. Locale is synced from backend user settings on login via `App.jsx` `useEffect`.
 - **Theme**: Tailwind `class` strategy — `dark` class on `<html>` via `ThemeContext`
 - **Date/time**: All timestamps use the browser's local timezone via `Date` getters (`getFullYear`, `getMonth`, `getDate`, `getHours`, `getMinutes`). No UTC `.toISOString()` is used.
-- **Tags**: Stored per-language as a dict `{"en": [...], "pt-BR": [...]}` in user settings. Defaults auto-populate for each language. Each language has its own independent tag set (e.g. "Happy" in EN, "Feliz" in PT-BR). Tags are displayed as clickable toggle buttons in EntryForm, managed in Settings.
-
+|- **Tags**: Stored per-language as a dict `{"en": [...], "pt-BR": [...]}` in user settings. Defaults auto-populate for each language. Each language has its own independent tag set (e.g. "Happy" in EN, "Feliz" in PT-BR). Tags are displayed as clickable toggle buttons in EntryForm, managed in Settings.
+|- **Custom Scales**: Users can create numeric scales (e.g. "Anxiety" 0-10, "Energy" 0-5) in Settings. Each scale has a name, min (0), max (1-100), and step. Scales appear as range sliders in EntryForm alongside the mood selector. Data stored per-entry in `scales` frontmatter field. Stats page renders `scales_by_date` as recharts bar charts.
+|
 ## Deployment
 
 ### Docker (recommended)

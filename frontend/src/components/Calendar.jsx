@@ -152,10 +152,7 @@ export default function Calendar() {
                   >
                     <span className={`${isToday ? 'text-purple-600 font-bold' : 'text-custom'}`}>{day}</span>
                     {color && (
-                      <span
-                        className="mt-1 w-2 h-2 rounded-full"
-                        style={{ backgroundColor: color }}
-                      />
+                      <div className="absolute bottom-0 left-2 right-2 h-[3px] rounded-full" style={{ backgroundColor: color }} />
                     )}
                   </button>
                 )
