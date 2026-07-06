@@ -28,7 +28,7 @@ export default function Stats() {
   }, [])
 
   if (!stats) {
-    return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>
+    return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>
   }
 
   if (stats.total_entries === 0) {

@@ -42,7 +42,7 @@ export default function Search() {
               <button
                 key={tag}
                 onClick={() => setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTags.includes(tag) ? 'bg-cyan-400 text-white' : 'card-bg border border-custom text-custom'}`}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTags.includes(tag) ? 'bg-cyan-500 text-white' : 'card-bg border border-custom text-custom'}`}
               >
                 {tag}
               </button>
@@ -61,7 +61,7 @@ export default function Search() {
           </div>
         </div>
 
-        <button onClick={handleSearch} className="w-full py-2.5 bg-cyan-400 text-white rounded-lg font-medium hover:bg-cyan-500">{t('search')}</button>
+        <button onClick={handleSearch} className="w-full py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600">{t('search')}</button>
       </div>
 
       {searched && (

@@ -32,13 +32,13 @@ export default function EntryCard({ entry }) {
       {entry.tags && entry.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {entry.tags.map((tag) => (
-            <span key={tag} className="px-2 py-0.5 rounded-full text-xs bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-200">{tag}</span>
+            <span key={tag} className="px-2 py-0.5 rounded-full text-xs bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300">{tag}</span>
           ))}
         </div>
       )}
       <div className="text-sm whitespace-pre-wrap text-custom" dangerouslySetInnerHTML={{ __html: entry.body?.replace(/\n/g, '<br/>') || '' }} />
       <div className="flex gap-2 mt-3 pt-3 border-t border-custom">
-        <button onClick={() => navigate(`/edit/${encodeURIComponent(entry.path)}`)} className="text-sm text-cyan-400 hover:underline">{t('edit')}</button>
+        <button onClick={() => navigate(`/edit/${encodeURIComponent(entry.path)}`)} className="text-sm text-cyan-500 hover:underline">{t('edit')}</button>
         <button onClick={handleDelete} className="text-sm text-red-500 hover:underline">{t('delete')}</button>
       </div>
     </div>

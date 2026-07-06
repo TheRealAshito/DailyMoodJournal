@@ -16,7 +16,7 @@ export default function MoodSlider({ value, onChange, disabled }) {
             onClick={() => onChange(i)}
             className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
               value === i
-                ? 'ring-2 ring-cyan-300 scale-110'
+                ? 'ring-2 ring-cyan-400 scale-110'
                 : 'hover:scale-105 opacity-60 hover:opacity-100'
             }`}
             title={`${i} — ${t(`mood_${i}`)}`}

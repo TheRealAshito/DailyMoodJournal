@@ -27,7 +27,7 @@ export default function Navbar() {
   return (
     <header className="sidebar-bg border-b border-custom sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 flex items-center h-14 gap-4">
-        <h1 className="text-lg font-bold text-cyan-400 whitespace-nowrap">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
+        <h1 className="text-lg font-bold text-cyan-500 whitespace-nowrap">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
 
         <nav className="flex items-center gap-1 flex-1 overflow-x-auto">
           {NAV_ITEMS.map((item) => (
@@ -38,7 +38,7 @@ export default function Navbar() {
               className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                   isActive
-                    ? 'bg-cyan-400 text-white'
+                    ? 'bg-cyan-500 text-white'
                     : 'text-custom hover-bg'
                 }`
               }
