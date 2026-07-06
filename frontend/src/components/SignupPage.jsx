@@ -60,33 +60,33 @@ export default function SignupPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">{t('username')}</label>
-          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" autoFocus />
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" autoFocus />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t('password')}</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t('confirm_password')}</label>
-          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t('security_question')}</label>
-          <select value={question} onChange={(e) => setQuestion(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500">
+          <select value={question} onChange={(e) => setQuestion(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300">
             {QUESTIONS.map((q) => <option key={q} value={q}>{q}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t('security_answer')}</label>
-          <input type="text" value={answer} onChange={(e) => setAnswer(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          <input type="text" value={answer} onChange={(e) => setAnswer(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" />
         </div>
-        <button type="submit" disabled={loading} className="w-full py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50">
+        <button type="submit" disabled={loading} className="w-full py-2.5 bg-cyan-400 text-white rounded-lg font-medium hover:bg-cyan-500 transition-colors disabled:opacity-50">
           {loading ? '...' : t('signup')}
         </button>
       </form>
 
       <p className="mt-4 text-center text-sm text-custom-muted">
-        <Link to="/login" className="text-purple-600 hover:underline">{t('back_to_login')}</Link>
+        <Link to="/login" className="text-cyan-400 hover:underline">{t('back_to_login')}</Link>
       </p>
     </div>
   )

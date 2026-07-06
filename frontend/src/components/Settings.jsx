@@ -162,7 +162,7 @@ export default function Settings() {
     api.put('/settings', { custom_scales: updated }).catch(() => {})
   }
 
-  if (!settings) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
+  if (!settings) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>
 
   return (
     <div className="max-w-2xl">
@@ -190,7 +190,7 @@ export default function Settings() {
                     setSettings(r.data)
                   } catch {}
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${settings.language === lang ? 'bg-purple-600 text-white' : 'border-custom bg-custom-secondary text-custom'}`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${settings.language === lang ? 'bg-cyan-400 text-white' : 'border-custom bg-custom-secondary text-custom'}`}
               >
                 {lang === 'en' ? 'English' : 'Português'}
               </button>
@@ -205,7 +205,7 @@ export default function Settings() {
             {CATEGORIES.map((cat) => {
               const active = (settings.reflection_categories || []).includes(cat.key)
               return (
-                <button key={cat.key} onClick={() => updateCategory(cat.key)} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${active ? 'bg-purple-600 text-white' : 'border border-custom text-custom'}`}>
+                <button key={cat.key} onClick={() => updateCategory(cat.key)} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${active ? 'bg-cyan-400 text-white' : 'border border-custom text-custom'}`}>
                   {t(cat.key)}
                 </button>
               )
@@ -218,7 +218,7 @@ export default function Settings() {
           <p className="text-sm text-custom-muted mb-3">Manage your available tags. These appear as clickable buttons when writing an entry.</p>
           <div className="flex flex-wrap gap-2 mb-3">
             {(settings.tags?.[settings.language] || settings.tags?.en || []).map((tag) => (
-              <span key={tag} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+              <span key={tag} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-200">
                 {tag}
                 <button
                   onClick={() => {
@@ -250,9 +250,9 @@ export default function Settings() {
                 }
               }}
               placeholder="New tag name"
-              className="flex-1 px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="flex-1 px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300"
             />
-            <button onClick={handleAddTag} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">Add</button>
+            <button onClick={handleAddTag} className="px-4 py-2 bg-cyan-400 text-white rounded-lg text-sm font-medium hover:bg-cyan-500">Add</button>
           </div>
         </div>
 
@@ -294,7 +294,7 @@ export default function Settings() {
                 onChange={(e) => setNewScaleName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddScale() } }}
                 placeholder="e.g. Anxiety"
-                className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300"
               />
             </div>
             <div className="w-20">
@@ -306,10 +306,10 @@ export default function Settings() {
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddScale() } }}
                 min="1"
                 max="100"
-                className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300"
               />
             </div>
-            <button onClick={handleAddScale} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">Add</button>
+            <button onClick={handleAddScale} className="px-4 py-2 bg-cyan-400 text-white rounded-lg text-sm font-medium hover:bg-cyan-500">Add</button>
           </div>
         </div>
 
@@ -320,7 +320,7 @@ export default function Settings() {
               <option value="tar.gz">.tar.gz</option>
               <option value="zip">.zip</option>
             </select>
-            <button onClick={handleExport} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700">{t('build_export')}</button>
+            <button onClick={handleExport} className="px-4 py-2 bg-cyan-400 text-white rounded-lg font-medium hover:bg-cyan-500">{t('build_export')}</button>
           </div>
         </div>
 
@@ -330,22 +330,22 @@ export default function Settings() {
           <div className="flex gap-3 mb-3 items-end">
             <div>
               <label className="block text-xs text-custom-muted mb-1">{t('pdf_date_from')}</label>
-              <input type="date" value={pdfFrom} onChange={(e) => setPdfFrom(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+              <input type="date" value={pdfFrom} onChange={(e) => setPdfFrom(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
             </div>
             <div>
               <label className="block text-xs text-custom-muted mb-1">{t('pdf_date_to')}</label>
-              <input type="date" value={pdfTo} onChange={(e) => setPdfTo(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+              <input type="date" value={pdfTo} onChange={(e) => setPdfTo(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
             </div>
             <div className="text-xs text-custom-muted pb-2">{t('pdf_all_entries')}</div>
           </div>
-          <button onClick={handleExportPDF} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">{t('export_pdf_btn')}</button>
+          <button onClick={handleExportPDF} className="px-4 py-2 bg-cyan-400 text-white rounded-lg text-sm font-medium hover:bg-cyan-500">{t('export_pdf_btn')}</button>
         </div>
 
         <div className="card-bg border border-custom rounded-xl p-5">
           <h3 className="font-semibold mb-3">{t('import')}</h3>
           <p className="text-sm text-custom-muted mb-3">{t('import_files')}</p>
           <input type="file" ref={fileRef} multiple accept=".tar.gz,.tgz,.zip,.md,.txt" className="mb-3 text-sm" />
-          <button onClick={handleImport} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">{t('import')}</button>
+          <button onClick={handleImport} className="px-4 py-2 bg-cyan-400 text-white rounded-lg text-sm font-medium hover:bg-cyan-500">{t('import')}</button>
           {impMsg && <p className="text-sm mt-2 text-custom-muted">{impMsg}</p>}
           {impFiles.length > 0 && (
             <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
@@ -363,10 +363,10 @@ export default function Settings() {
         <div className="card-bg border border-custom rounded-xl p-5">
           <h3 className="font-semibold mb-3">{t('change_password')}</h3>
           <div className="space-y-3">
-            <input type="password" value={oldPw} onChange={(e) => setOldPw(e.target.value)} placeholder={t('current_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" />
-            <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder={t('new_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" />
-            <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder={t('confirm_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" />
-            <button onClick={changePassword} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">{t('change_password')}</button>
+            <input type="password" value={oldPw} onChange={(e) => setOldPw(e.target.value)} placeholder={t('current_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300 text-sm" />
+            <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder={t('new_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300 text-sm" />
+            <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder={t('confirm_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300 text-sm" />
+            <button onClick={changePassword} className="px-4 py-2 bg-cyan-400 text-white rounded-lg text-sm font-medium hover:bg-cyan-500">{t('change_password')}</button>
             {pwMsg && <p className={`text-sm ${pwMsg.includes('changed') ? 'text-green-600' : 'text-red-500'}`}>{pwMsg}</p>}
           </div>
         </div>

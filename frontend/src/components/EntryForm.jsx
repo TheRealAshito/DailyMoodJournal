@@ -133,7 +133,7 @@ export default function EntryForm() {
   }
 
   if (fetching) {
-    return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
+    return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>
   }
 
   return (
@@ -145,17 +145,17 @@ export default function EntryForm() {
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="block text-sm font-medium mb-1">{t('title')}</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" autoFocus />
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" autoFocus />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">{t('date')}</label>
-            <input type="date" value={edate} onChange={(e) => setEdate(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            <input type="date" value={edate} onChange={(e) => setEdate(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">{t('time')}</label>
-            <input type="time" value={etime} onChange={(e) => setEtime(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            <input type="time" value={etime} onChange={(e) => setEtime(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" />
           </div>
         </div>
 
@@ -176,7 +176,7 @@ export default function EntryForm() {
                   step={scale.step || 1}
                   value={scaleValues[scale.name] ?? Math.round((scale.min + scale.max) / 2)}
                   onChange={(e) => setScaleValues({ ...scaleValues, [scale.name]: parseInt(e.target.value, 10) })}
-                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-custom-secondary accent-purple-600"
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-custom-secondary accent-cyan-400"
                 />
                 <div className="flex justify-between text-xs text-custom-muted mt-0.5">
                   <span>{scale.min}</span>
@@ -205,8 +205,8 @@ export default function EntryForm() {
                   }}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                     active
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'bg-custom-secondary border border-custom text-custom hover:border-purple-400'
+                      ? 'bg-cyan-400 text-white shadow-sm'
+                      : 'bg-custom-secondary border border-custom text-custom hover:border-cyan-300'
                   }`}
                 >
                   {tag}
@@ -221,7 +221,7 @@ export default function EntryForm() {
 
         <div>
           <label className="flex items-center gap-2 text-sm font-medium mb-2 cursor-pointer">
-            <input type="checkbox" checked={includePrompts} onChange={togglePrompts} className="w-4 h-4 accent-purple-600" />
+            <input type="checkbox" checked={includePrompts} onChange={togglePrompts} className="w-4 h-4 accent-cyan-400" />
             {t('include_reflection')}
           </label>
 
@@ -251,11 +251,11 @@ export default function EntryForm() {
 
         <div>
           <label className="block text-sm font-medium mb-1">{t('body')}</label>
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={10} placeholder="Write your thoughts here..." className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={10} placeholder="Write your thoughts here..." className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" />
         </div>
 
         <div className="flex gap-3">
-          <button type="submit" disabled={loading} className="px-6 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50">
+          <button type="submit" disabled={loading} className="px-6 py-2.5 bg-cyan-400 text-white rounded-lg font-medium hover:bg-cyan-500 transition-colors disabled:opacity-50">
             {loading ? '...' : t('save')}
           </button>
           <button type="button" onClick={() => navigate('/')} className="px-6 py-2.5 border-custom bg-custom-secondary text-custom rounded-lg font-medium hover-bg">

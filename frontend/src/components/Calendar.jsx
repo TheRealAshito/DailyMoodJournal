@@ -95,7 +95,7 @@ export default function Calendar() {
           <h1 className="text-2xl font-bold text-custom">{t('journal')}</h1>
           <p className="text-sm text-custom-muted mt-0.5">{t('total_entries')}: {entries.length}</p>
         </div>
-        <button onClick={() => navigate('/new')} className="px-5 py-2.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-all shadow-sm hover:shadow-md active:scale-95">
+        <button onClick={() => navigate('/new')} className="px-5 py-2.5 bg-cyan-400 text-white rounded-xl font-medium hover:bg-cyan-500 transition-all shadow-sm hover:shadow-md active:scale-95">
           + {t('new_entry')}
         </button>
       </div>
@@ -104,7 +104,7 @@ export default function Calendar() {
       <div className="card-bg border border-custom rounded-2xl p-5 mb-6 shadow-sm">
         {/* Month navigator */}
         <div className="flex items-center justify-between mb-5">
-          <button onClick={prevMonth} className="w-9 h-9 flex items-center justify-center rounded-xl border border-custom bg-custom-secondary text-custom hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 transition-all">
+          <button onClick={prevMonth} className="w-9 h-9 flex items-center justify-center rounded-xl border border-custom bg-custom-secondary text-custom hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:border-cyan-200 transition-all">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
 
@@ -112,13 +112,13 @@ export default function Calendar() {
             <h2 className="text-lg font-bold text-custom">{t(`month_${month}`)} <span className="text-custom-muted font-normal">{year}</span></h2>
           </div>
 
-          <button onClick={nextMonth} className="w-9 h-9 flex items-center justify-center rounded-xl border border-custom bg-custom-secondary text-custom hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 transition-all">
+          <button onClick={nextMonth} className="w-9 h-9 flex items-center justify-center rounded-xl border border-custom bg-custom-secondary text-custom hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:border-cyan-200 transition-all">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-16"><div className="w-7 h-7 border-[3px] border-purple-600 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="flex justify-center py-16"><div className="w-7 h-7 border-[3px] border-cyan-400 border-t-transparent rounded-full animate-spin" /></div>
         ) : (
           <>
             {/* Day headers */}
@@ -146,13 +146,13 @@ export default function Calendar() {
                     onDoubleClick={() => navigate(`/new?date=${dateKey}`)}
                     className={`
                       relative flex flex-col items-center justify-center py-2 rounded-xl text-sm font-medium transition-all
-                      ${isSelected ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900/20' : color ? 'ring-2' : ''}
-                      ${isToday && !isSelected ? 'ring-1 ring-purple-300' : ''}
+                      ${isSelected ? 'ring-2 ring-cyan-300 bg-cyan-50 dark:bg-cyan-900/20' : color ? 'ring-2' : ''}
+                      ${isToday && !isSelected ? 'ring-1 ring-cyan-200' : ''}
                       ${!isSelected && !isToday ? 'hover:bg-custom-secondary' : ''}
                     `}
                     style={color && !isSelected ? { '--tw-ring-color': color } : {}}
                   >
-                    <span className={`${isToday ? 'text-purple-600 font-bold' : 'text-custom'}`}>{day}</span>
+                    <span className={`${isToday ? 'text-cyan-400 font-bold' : 'text-custom'}`}>{day}</span>
                   </button>
                 )
               })}
@@ -183,14 +183,14 @@ export default function Calendar() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-1.5 rounded-xl border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-1.5 rounded-xl border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300"
           />
         </div>
 
         {dayEntries.length === 0 ? (
           <div className="card-bg border border-custom rounded-2xl p-8 text-center">
             <p className="text-custom-muted text-sm mb-3">{t('no_entries')}</p>
-            <button onClick={() => navigate('/new')} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">{t('write_one')}</button>
+            <button onClick={() => navigate('/new')} className="px-4 py-2 bg-cyan-400 text-white rounded-lg text-sm font-medium hover:bg-cyan-500 transition-colors">{t('write_one')}</button>
           </div>
         ) : (
           <div className="space-y-3">

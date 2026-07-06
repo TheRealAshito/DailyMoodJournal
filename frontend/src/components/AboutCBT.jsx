@@ -13,7 +13,7 @@ export default function AboutCBT() {
         <h3 className="font-semibold mb-3 text-lg">{t('cbt_what_are')}</h3>
         <p className="text-sm leading-relaxed text-custom-muted">{t('cbt_desc_1')}</p>
         <p className="text-sm leading-relaxed text-custom-muted mt-3">{t('cbt_desc_2')}</p>
-        <div className="mt-4 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-sm">
+        <div className="mt-4 p-3 rounded-lg bg-cyan-50 dark:bg-cyan-900/20 text-sm">
           <strong>{t('cbt_cycle_title')}:</strong> {t('cbt_cycle')}
         </div>
       </div>

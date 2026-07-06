@@ -81,29 +81,29 @@ export default function ResetPasswordPage() {
 
       {step === 'username' && (
         <div className="space-y-4">
-          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t('username')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" autoFocus />
-          <button onClick={handleUsername} disabled={loading} className="w-full py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50">{t('continue')}</button>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t('username')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" autoFocus />
+          <button onClick={handleUsername} disabled={loading} className="w-full py-2.5 bg-cyan-400 text-white rounded-lg font-medium hover:bg-cyan-500 disabled:opacity-50">{t('continue')}</button>
         </div>
       )}
 
       {step === 'answer' && (
         <div className="space-y-4">
           <p className="text-sm text-custom-muted">{question}</p>
-          <input type="text" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={t('security_answer')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" autoFocus />
-          <button onClick={handleAnswer} disabled={loading} className="w-full py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50">{t('verify')}</button>
+          <input type="text" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={t('security_answer')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" autoFocus />
+          <button onClick={handleAnswer} disabled={loading} className="w-full py-2.5 bg-cyan-400 text-white rounded-lg font-medium hover:bg-cyan-500 disabled:opacity-50">{t('verify')}</button>
         </div>
       )}
 
       {step === 'new_password' && (
         <div className="space-y-4">
-          <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('new_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" autoFocus />
-          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t('confirm_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
-          <button onClick={handleReset} disabled={loading} className="w-full py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50">{t('reset_password')}</button>
+          <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('new_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" autoFocus />
+          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t('confirm_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" />
+          <button onClick={handleReset} disabled={loading} className="w-full py-2.5 bg-cyan-400 text-white rounded-lg font-medium hover:bg-cyan-500 disabled:opacity-50">{t('reset_password')}</button>
         </div>
       )}
 
       <p className="mt-4 text-center text-sm text-custom-muted">
-        <Link to="/login" className="text-purple-600 hover:underline">{t('back_to_login')}</Link>
+        <Link to="/login" className="text-cyan-400 hover:underline">{t('back_to_login')}</Link>
       </p>
     </div>
   )

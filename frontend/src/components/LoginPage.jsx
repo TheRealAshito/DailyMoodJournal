@@ -40,20 +40,20 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">{t('username')}</label>
-          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" autoFocus />
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" autoFocus />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t('password')}</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-300" />
         </div>
-        <button type="submit" disabled={loading} className="w-full py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50">
+        <button type="submit" disabled={loading} className="w-full py-2.5 bg-cyan-400 text-white rounded-lg font-medium hover:bg-cyan-500 transition-colors disabled:opacity-50">
           {loading ? '...' : t('login')}
         </button>
       </form>
 
       <div className="mt-4 text-center space-y-2">
-        <Link to="/reset-password" className="text-sm text-purple-600 hover:underline block">{t('forgot_password')}</Link>
-        <p className="text-sm text-custom-muted">{t('no_account')} <Link to="/signup" className="text-purple-600 hover:underline">{t('create_account')}</Link></p>
+        <Link to="/reset-password" className="text-sm text-cyan-400 hover:underline block">{t('forgot_password')}</Link>
+        <p className="text-sm text-custom-muted">{t('no_account')} <Link to="/signup" className="text-cyan-400 hover:underline">{t('create_account')}</Link></p>
       </div>
     </div>
   )
