@@ -223,4 +223,15 @@
   "howto_export_text": "Go to Settings > Export to download all your entries as a .tar.gz or .zip archive. Use Export as PDF to compile entries into a single PDF file. The Import section lets you upload previously exported archives or individual .md/.txt files.",
   "howto_settings_title": "Settings",
   "howto_settings_text": "In Settings you can change your theme, switch language, manage reflection prompt categories, create custom scales and tags, export or import data, and change your password."
+,
+  "period": "Period",
+  "daily": "Daily",
+  "weekly": "Weekly",
+  "monthly": "Monthly",
+  "tag_mood_correlation": "Mood by Tag",
+  "avg_mood_per_tag": "Avg Mood",
+  "entries_with_tag": "Entries",
+  "day_of_week_mood": "Mood by Day of Week",
+  "tag_frequency": "Most Used Tags",
+  "usage_count": "Times Used"
 }

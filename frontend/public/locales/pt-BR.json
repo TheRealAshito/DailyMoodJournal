@@ -223,4 +223,15 @@
   "howto_export_text": "Va em Configuracoes > Export para baixar todas as suas entradas como um arquivo .tar.gz ou .zip. Use Exportar como PDF para compilar entradas em um unico PDF. A secao Import permite enviar arquivos exportados anteriormente ou arquivos .md/.txt individuais.",
   "howto_settings_title": "Configuracoes",
   "howto_settings_text": "Em Configuracoes voce pode alterar o tema, trocar o idioma, gerenciar categorias de reflexao, criar escalas personalizadas e tags, exportar ou importar dados e alterar sua senha."
+,
+  "period": "Periodo",
+  "daily": "Diario",
+  "weekly": "Semanal",
+  "monthly": "Mensal",
+  "tag_mood_correlation": "Humor por Tag",
+  "avg_mood_per_tag": "Humor Medio",
+  "entries_with_tag": "Entradas",
+  "day_of_week_mood": "Humor por Dia da Semana",
+  "tag_frequency": "Tags Mais Usadas",
+  "usage_count": "Vezes Usada"
 }

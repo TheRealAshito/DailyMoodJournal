@@ -146,6 +146,11 @@ def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=Non
         if tags:
             pdf.cell(0, 6, f"  {lang_data['tags']}: {_clean_pdf_text(', '.join(tags))}", ln=True)
 
+        scales = entry.get("scales", {})
+        if isinstance(scales, dict) and scales:
+            scale_str = "  |  ".join(f"{_clean_pdf_text(k)}: {v}" for k, v in scales.items())
+            pdf.cell(0, 6, f"  {_clean_pdf_text(scale_str)}", ln=True)
+
         pdf.ln(3)
         body = entry.get("body", "")
         pdf.set_font("DejaVuSans", "", 10)
