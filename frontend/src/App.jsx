@@ -13,11 +13,13 @@ import Search from './components/Search'
 import Stats from './components/Stats'
 import Settings from './components/Settings'
 import AboutCBT from './components/AboutCBT'
+import StickyNote from './components/StickyNote'
 
 function ProtectedLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-custom">
       <Navbar />
+      <StickyNote />
       <main className="flex-1 p-6 max-w-6xl mx-auto w-full">
         <Routes>
           <Route index element={<Calendar />} />
