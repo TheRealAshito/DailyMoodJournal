@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import auth, entries, export, search, stats, settings
+from backend.routers import auth, entries, export, search, stats, settings, freewrite
 from backend.config import ensure_directories
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -44,6 +44,7 @@ app.include_router(export.router)
 app.include_router(search.router)
 app.include_router(stats.router)
 app.include_router(settings.router)
+app.include_router(freewrite.router)
 
 
 @app.on_event("startup")

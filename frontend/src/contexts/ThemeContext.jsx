@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => localStorage.getItem('dailymood_theme') || 'light')
+  const [theme, setTheme] = useState('light')
 
   useEffect(() => {
     const html = document.documentElement
@@ -12,7 +12,6 @@ export function ThemeProvider({ children }) {
     } else {
       html.classList.remove('dark')
     }
-    localStorage.setItem('dailymood_theme', theme)
   }, [theme])
 
   return (

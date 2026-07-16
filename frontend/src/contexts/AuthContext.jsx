@@ -11,8 +11,6 @@ export function AuthProvider({ children }) {
     api.get('/auth/me')
       .then((r) => {
         setUser({ username: r.data.username, settings: r.data.settings })
-        localStorage.setItem('dailymood_theme', r.data.settings?.theme || 'light')
-        localStorage.setItem('dailymood_language', r.data.settings?.language || 'en')
       })
       .catch(() => setUser(null))
       .finally(() => setLoading(false))
@@ -21,8 +19,6 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (username, password) => {
     const r = await api.post('/auth/login', { username, password })
     setUser({ username: r.data.username, settings: r.data.settings })
-    localStorage.setItem('dailymood_theme', r.data.settings?.theme || 'light')
-    localStorage.setItem('dailymood_language', r.data.settings?.language || 'en')
     return r.data
   }, [])
 
@@ -35,8 +31,6 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     await api.post('/auth/logout')
     setUser(null)
-    localStorage.removeItem('dailymood_theme')
-    localStorage.removeItem('dailymood_language')
   }, [])
 
   return (

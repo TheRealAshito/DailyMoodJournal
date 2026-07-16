@@ -4,8 +4,8 @@ const I18nContext = createContext(null)
 
 const LOCALE_CACHE = {}
 
-// Read from localStorage synchronously so the very first render uses the right locale
-const storedLang = localStorage.getItem('dailymood_language') || 'en'
+// Default to English; locale is synced from backend on login via App.jsx useEffect
+const storedLang = 'en'
 
 export function I18nProvider({ children }) {
   const [locale, setLocale] = useState(storedLang)
@@ -33,7 +33,6 @@ export function I18nProvider({ children }) {
 
   function changeLocale(lang) {
     setLocale(lang)
-    localStorage.setItem('dailymood_language', lang)
   }
 
   return (

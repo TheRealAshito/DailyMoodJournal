@@ -13,13 +13,12 @@ import Search from './components/Search'
 import Stats from './components/Stats'
 import Settings from './components/Settings'
 import AboutCBT from './components/AboutCBT'
-import StickyNote from './components/StickyNote'
+import FreeWrite from './components/FreeWrite'
 
 function ProtectedLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-custom">
       <Navbar />
-      <StickyNote />
       <main className="flex-1 p-6 max-w-6xl mx-auto w-full">
         <Routes>
           <Route index element={<Calendar />} />
@@ -28,6 +27,7 @@ function ProtectedLayout() {
           <Route path="search" element={<Search />} />
           <Route path="stats" element={<Stats />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="freewrite" element={<FreeWrite />} />
           <Route path="about-cbt" element={<AboutCBT />} />
           <Route path="how-to-use" element={<HowToUse />} />
         </Routes>
@@ -39,13 +39,17 @@ function ProtectedLayout() {
 export default function App() {
   const { user, loading } = useAuth()
   const { changeLocale } = useI18n()
+  const { setTheme } = useTheme()
 
-  // Sync locale from backend settings whenever user state changes
+  // Sync locale and theme from backend settings whenever user state changes
   useEffect(() => {
     if (user?.settings?.language) {
       changeLocale(user.settings.language)
     }
-  }, [user?.settings?.language])
+    if (user?.settings?.theme) {
+      setTheme(user.settings.theme)
+    }
+  }, [user?.settings?.language, user?.settings?.theme])
 
   if (loading) {
     return (

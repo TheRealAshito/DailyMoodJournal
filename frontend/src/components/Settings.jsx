@@ -171,7 +171,11 @@ export default function Settings() {
       <div className="space-y-6">
         <div className="card-bg border border-custom rounded-xl p-5">
           <h3 className="font-semibold mb-3">{t('theme')}</h3>
-          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="px-4 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm font-medium">
+          <button onClick={() => {
+            const next = theme === 'dark' ? 'light' : 'dark'
+            setTheme(next)
+            api.put('/settings', { theme: next }).catch(() => {})
+          }} className="px-4 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm font-medium">
             {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
           </button>
         </div>
