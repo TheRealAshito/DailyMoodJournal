@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import api from '../api'
+import { useI18n } from '../i18n'
 
 const SAVE_DELAY = 800
 
 export default function FreeWrite() {
+  const { t } = useI18n()
   const [sessions, setSessions] = useState([])
   const [activeId, setActiveId] = useState(null)
   const [title, setTitle] = useState('')
@@ -80,7 +82,7 @@ export default function FreeWrite() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Delete this free write session?')) return
+    if (!confirm(t('fw_delete_confirm'))) return
     try {
       await api.delete(`/freewrite/${id}`)
       setSessions((prev) => prev.filter((s) => s.id !== id))
@@ -104,10 +106,10 @@ export default function FreeWrite() {
     <div className="flex flex-col h-[calc(100vh-7rem)]">
       {/* Header bar */}
       <div className="flex items-center justify-between mb-4 shrink-0">
-        <h1 className="text-xl font-bold">Free Write</h1>
+        <h1 className="text-xl font-bold">{t('free_write')}</h1>
         <div className="flex items-center gap-3 text-xs text-custom-muted">
-          <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
-          {saving && <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" title="Saving..." />}
+          <span>{wordCount} {wordCount === 1 ? t('fw_word') : t('fw_words')}</span>
+          {saving && <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" title={t('fw_saving')} />}
         </div>
       </div>
 
@@ -122,10 +124,10 @@ export default function FreeWrite() {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleNew() } }}
-              placeholder="New session..."
+              placeholder={t('fw_new_session')}
               className="flex-1 px-2 py-1.5 rounded-lg border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 min-w-0"
             />
-            <button onClick={handleNew} className="px-2.5 py-1.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 shrink-0" title="Create new session">
+            <button onClick={handleNew} className="px-2.5 py-1.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 shrink-0" title={t('fw_create')}>
               +
             </button>
           </div>
@@ -133,7 +135,7 @@ export default function FreeWrite() {
           {/* Session list */}
           <div className="flex-1 overflow-y-auto space-y-1">
             {sessions.length === 0 && (
-              <p className="text-xs text-custom-muted text-center pt-4">No sessions yet</p>
+              <p className="text-xs text-custom-muted text-center pt-4">{t('fw_no_sessions')}</p>
             )}
             {sessions.map((s) => (
               <div
@@ -156,7 +158,7 @@ export default function FreeWrite() {
                   className={`shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-sm leading-none px-1 rounded ${
                     activeId === s.id ? 'hover:bg-white/20 text-white/70' : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-red-400'
                   }`}
-                  title="Delete session"
+                  title={t('fw_delete')}
                 >
                   ×
                 </button>
@@ -174,7 +176,7 @@ export default function FreeWrite() {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Session title..."
+                  placeholder={t('fw_session_title')}
                   className="w-full bg-transparent text-custom font-semibold placeholder-custom-muted/50 outline-none text-base"
                 />
               </div>
@@ -182,21 +184,21 @@ export default function FreeWrite() {
                 ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Write anything that comes to mind..."
+                placeholder={t('fw_write_here')}
                 className="flex-1 bg-transparent text-custom placeholder-custom-muted/50 p-5 text-base leading-relaxed outline-none resize-none rounded-b-xl"
                 style={{ fontFamily: 'inherit', lineHeight: '1.8' }}
               />
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center text-custom-muted text-sm">
-              Create a new session to start writing
+              {t('fw_empty')}
             </div>
           )}
         </div>
       </div>
 
       <p className="text-xs text-custom-muted mt-3 text-center shrink-0">
-        Auto-saves as you type. Each session is a separate free write.
+        {t('fw_auto_save')}
       </p>
     </div>
   )

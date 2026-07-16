@@ -7,7 +7,7 @@ import api from '../api'
 const NAV_ITEMS = [
   { to: '/', icon: '\uD83D\uDCC5', key: 'journal', end: true },
   { to: '/new', icon: '\u270F\uFE0F', key: 'new_entry', end: false },
-  { to: '/freewrite', icon: '\uD83D\uDCDD', key: 'Free Write', end: false },
+  { to: '/freewrite', icon: '\uD83D\uDCDD', key: 'free_write', end: false },
   { to: '/search', icon: '\uD83D\uDD0D', key: 'search', end: false },
   { to: '/stats', icon: '\uD83D\uDCCA', key: 'stats', end: false },
   { to: '/about-cbt', icon: '\uD83E\uDDE0', key: 'about_cbt', end: false },

@@ -233,5 +233,18 @@
   "entries_with_tag": "Entradas",
   "day_of_week_mood": "Humor por Dia da Semana",
   "tag_frequency": "Tags Mais Usadas",
-  "usage_count": "Vezes Usada"
+  "usage_count": "Vezes Usada",
+  "free_write": "Escrita Livre",
+  "fw_new_session": "Nova sessao...",
+  "fw_create": "Criar",
+  "fw_no_sessions": "Nenhuma sessao ainda",
+  "fw_session_title": "Titulo da sessao...",
+  "fw_write_here": "Escreva tudo que vier a mente...",
+  "fw_empty": "Crie uma nova sessao para comecar a escrever",
+  "fw_auto_save": "Salva automaticamente enquanto voce digita. Cada sessao e uma escrita livre separada.",
+  "fw_delete_confirm": "Deletar esta sessao de escrita livre?",
+  "fw_delete": "Deletar",
+  "fw_saving": "Salvando...",
+  "fw_word": "palavra",
+  "fw_words": "palavras"
 }

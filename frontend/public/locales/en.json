@@ -233,5 +233,18 @@
   "entries_with_tag": "Entries",
   "day_of_week_mood": "Mood by Day of Week",
   "tag_frequency": "Most Used Tags",
-  "usage_count": "Times Used"
+  "usage_count": "Times Used",
+  "free_write": "Free Write",
+  "fw_new_session": "New session...",
+  "fw_create": "Create",
+  "fw_no_sessions": "No sessions yet",
+  "fw_session_title": "Session title...",
+  "fw_write_here": "Write anything that comes to mind...",
+  "fw_empty": "Create a new session to start writing",
+  "fw_auto_save": "Auto-saves as you type. Each session is a separate free write.",
+  "fw_delete_confirm": "Delete this free write session?",
+  "fw_delete": "Delete",
+  "fw_saving": "Saving...",
+  "fw_word": "word",
+  "fw_words": "words"
 }
