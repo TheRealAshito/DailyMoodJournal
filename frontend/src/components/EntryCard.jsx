@@ -36,7 +36,7 @@ export default function EntryCard({ entry }) {
           ))}
         </div>
       )}
-      <div className="text-sm whitespace-pre-wrap text-custom" dangerouslySetInnerHTML={{ __html: entry.body?.replace(/\n/g, '<br/>') || '' }} />
+      <div className="text-sm whitespace-pre-wrap text-custom">{entry.body || ''}</div>
       <div className="flex gap-2 mt-3 pt-3 border-t border-custom">
         <button onClick={() => navigate(`/edit/${encodeURIComponent(entry.path)}`)} className="text-sm text-cyan-500 hover:underline">{t('edit')}</button>
         <button onClick={handleDelete} className="text-sm text-red-500 hover:underline">{t('delete')}</button>

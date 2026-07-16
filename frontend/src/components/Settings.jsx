@@ -38,6 +38,7 @@ export default function Settings() {
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
   const [pwMsg, setPwMsg] = useState('')
+  const [expMsg, setExpMsg] = useState('')
   const [exportFmt, setExportFmt] = useState('tar.gz')
   const [impMsg, setImpMsg] = useState('')
   const [impFiles, setImpFiles] = useState([])
@@ -326,6 +327,7 @@ export default function Settings() {
             </select>
             <button onClick={handleExport} className="px-4 py-2 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600">{t('build_export')}</button>
           </div>
+          {expMsg && <p className="text-sm text-red-500">{expMsg}</p>}
         </div>
 
         <div className="card-bg border border-custom rounded-xl p-5">
@@ -343,6 +345,7 @@ export default function Settings() {
             <div className="text-xs text-custom-muted pb-2">{t('pdf_all_entries')}</div>
           </div>
           <button onClick={handleExportPDF} className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600">{t('export_pdf_btn')}</button>
+          {expMsg && <p className="text-sm text-red-500 mt-2">{expMsg}</p>}
         </div>
 
         <div className="card-bg border border-custom rounded-xl p-5">

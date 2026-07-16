@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
+import { useTheme } from './contexts/ThemeContext'
 import { useI18n } from './i18n'
 import Navbar from './components/Navbar'
 import LoginPage from './components/LoginPage'
