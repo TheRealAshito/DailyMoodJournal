@@ -28,7 +28,7 @@ DailyMoodJournal/
 │   │   ├── search.py        # /search?tags=&from_date=&to_date=
 │   │   ├── stats.py         # /stats (streaks, mood data, distribution)
 |   │   ├── settings.py      # /settings (theme, lang, reflection categories, sticky notes)
-|   │   ├── freewrite.py     # /freewrite — persistent free-form text storage
+|   │   ├── freewrite.py     # /freewrite — session-based CRUD (list, create, get, update, delete)
 |   │   └── export.py        # /export (archive), /export/pdf (PDF), /export/import
 │   ├── crypto.py            # AES-256-GCM, PBKDF2 600K, key wrap/unwrap
 │   ├── entry_crud.py        # CRUD on encrypted .enc files (preserves unknown fields)
@@ -53,7 +53,7 @@ DailyMoodJournal/
 |   │   │   ├── Stats.jsx    # recharts bar charts, streak counters, distribution, custom scales bar charts (scales_by_date)
 |   │   │   ├── Settings.jsx # Theme, language, tag management (per-language), reflection categories, custom scales (add/remove), export/import, PDF, password
 │   │   │   ├── HowToUse.jsx # 6-section how-to guide (entries, scales, tags, calendar, export, settings)
-│   │   │   ├── FreeWrite.jsx # Unbounded text editor with auto-save, word count, no date/mood/tags
+│   │   │   ├── FreeWrite.jsx # Notebook layout: session list sidebar + editor with auto-save
 │   │   │   └── AboutCBT.jsx # 12 cognitive distortions with examples
 │   │   ├── contexts/
 |   │   │   ├── AuthContext.jsx # login, signup, logout, session restore, syncs settings from backend
@@ -71,7 +71,7 @@ DailyMoodJournal/
 ├── data/
 │   ├── users.json           # User credentials + settings + sticky_note (0o600)
 │   └── master.key           # Auto-generated Fernet key (0o600)
-│   └── {username}_freewrite.md  # Free Write text, one file per user
+│   └── {username}_freewrite.json  # Free Write sessions (array of {id, title, content, timestamps})
 ├── Dockerfile               # Multi-stage (Node build → Python serve)
 ├── docker-compose.yml
 ├── .gitignore
@@ -105,8 +105,11 @@ DailyMoodJournal/
 | GET | `/api/stats?period=day|week|month&from_date=&to_date=&tags=` | Streaks, mood averages, tag correlation, day-of-week breakdown, tag frequency, distribution, scales (with date/tag/period filters) |
 | GET | `/api/settings` | Get user preferences (theme, language, tags, scales, sticky_note) |
 | PUT | `/api/settings` | Update user preferences |
-| GET | `/api/freewrite` | Get free-write text for current user |
-| PUT | `/api/freewrite` | Save free-write text for current user |
+| GET | `/api/freewrite` | List all free write sessions (metadata) |
+| POST | `/api/freewrite` | Create a new free write session |
+| GET | `/api/freewrite/{id}` | Get full session content |
+| PUT | `/api/freewrite/{id}` | Update session title and content |
+| DELETE | `/api/freewrite/{id}` | Delete a free write session |
 | GET | `/api/export?format=tar.gz|zip` | Download decrypted archive |
 | GET | `/api/export/pdf?from_date=&to_date=` | Download PDF with optional date range |
 | POST | `/api/export/import` | Upload archive or .md/.txt files — returns `{imported, skipped, files[]}` with per-file status |
@@ -255,7 +258,7 @@ Emoji characters use `String.fromCodePoint()` in JSX expressions to avoid encodi
 ## Frontend Architecture
 
 - **SPA routing**: FastAPI catch-all route `/{full_path:path}` serves `index.html` for all client-side routes
-- **Navigation**: Top navbar with tabs (Journal, New Entry, Free Write, How to Use, Search, Stats, About CBT, Settings). Theme toggle is in the navbar; language switcher is in Settings.
+- **Navigation**: Top navbar with tabs (Journal, New Entry, Free Write, Search, Stats, About CBT). Settings (⚙️) and How to Use (❓) are icon buttons in the header next to the theme toggle. Language switcher is in Settings.
 - **Auth guard**: App.jsx checks `AuthContext.user` — unauthenticated users see login/signup/reset routes
 |- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing. Contains ~235 keys including UI strings, mood labels (`mood_0`–`mood_6`), day names (`day_0`–`day_6`), month names (`month_0`–`month_11`), 64 reflection prompts, 42 CBT education keys, and how-to-use/stats section keys. Locale and theme are synced from backend user settings on login via `App.jsx` `useEffect` — `changeLocale(user.settings.language)` + `setTheme(user.settings.theme)`.
 |- **Theme**: Tailwind `class` strategy — `dark` class on `<html>` via `ThemeContext`. Theme toggle in both navbar and Settings immediately saves to backend via `api.put('/settings', { theme })`. No localStorage — fully server-authoritative. On login, theme is restored from `user.settings.theme`.
@@ -269,7 +272,7 @@ Emoji characters use `String.fromCodePoint()` in JSX expressions to avoid encodi
 |  - **Custom scales** — per-scale bar charts (grouped by selected period)
 |- **Tags**: Stored per-language as a dict `{"en": [...], "pt-BR": [...]}` in user settings.
 - **Custom Scales**: Users can create numeric scales (e.g. "Anxiety" 0-10, "Energy" 0-5) in Settings. Each scale has a name, min (0), max (1-100), and step. Scales appear as range sliders in EntryForm alongside the mood selector. Data stored per-entry in `scales` frontmatter field. Stats page renders `scales_by_date` as recharts bar charts.
-- **Free Write**: Dedicated page (`/freewrite`) with a full-page textarea. No date, mood, tags, or reflection prompts — purely free-form writing. Text is stored server-side in `data/{username}_freewrite.md` (plain markdown). Auto-saves 800ms after the user stops typing. Word count displayed in the header. Not encrypted (intentionally — it's free-form reflection, not a journal entry). Accessible from the navbar (📝 icon).
+- **Free Write**: Dedicated page (`/freewrite`) with a notebook layout — session list sidebar on the left, editor on the right. Multiple sessions are stored in `data/{username}_freewrite.json` (plain JSON, no encryption — intentionally, it's free-form reflection, not a journal entry). Each session has an `{id, title, content, created_at, updated_at}`. Create new sessions from the sidebar, switch between them, and delete stale ones. Auto-saves 800ms after the user stops typing. Word count displayed in the header. Accessible from the navbar (📝 icon).
 - **Brand color**: Cyan-500 (`#06b6d4`) is the primary accent across the UI — buttons, nav active state, links, spinners, checkboxes, range sliders. The supporting palette shifts one shade lighter for focus rings (cyan-400, `#22d3ee`) and one shade darker for hover states (cyan-600, `#0891b2`).
 |
 ## Deployment
