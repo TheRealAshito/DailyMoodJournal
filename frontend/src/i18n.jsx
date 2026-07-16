@@ -16,7 +16,7 @@ export function I18nProvider({ children }) {
       setMessages(LOCALE_CACHE[locale])
       return
     }
-    fetch(`/locales/${locale}.json`)
+    fetch(`/locales/${locale}.json`, { cache: 'no-cache' })
       .then((r) => r.json())
       .then((data) => {
         LOCALE_CACHE[locale] = data
