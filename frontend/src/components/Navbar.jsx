@@ -8,11 +8,9 @@ const NAV_ITEMS = [
   { to: '/', icon: '\uD83D\uDCC5', key: 'journal', end: true },
   { to: '/new', icon: '\u270F\uFE0F', key: 'new_entry', end: false },
   { to: '/freewrite', icon: '\uD83D\uDCDD', key: 'Free Write', end: false },
-  { to: '/how-to-use', icon: '\u2753', key: 'howto', end: false },
   { to: '/search', icon: '\uD83D\uDD0D', key: 'search', end: false },
   { to: '/stats', icon: '\uD83D\uDCCA', key: 'stats', end: false },
   { to: '/about-cbt', icon: '\uD83E\uDDE0', key: 'about_cbt', end: false },
-  { to: '/settings', icon: '\u2699\uFE0F', key: 'settings', end: false },
 ]
 
 export default function Navbar() {
@@ -53,6 +51,28 @@ export default function Navbar() {
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-custom-muted hidden sm:inline">{user?.username}</span>
 
+          <NavLink
+            to="/how-to-use"
+            className={({ isActive }) =>
+              `px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                isActive ? 'bg-cyan-500 text-white' : 'text-custom hover-bg'
+              }`
+            }
+            title={t('howto')}
+          >
+            ❓
+          </NavLink>
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              `px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                isActive ? 'bg-cyan-500 text-white' : 'text-custom hover-bg'
+              }`
+            }
+            title={t('settings')}
+          >
+            ⚙️
+          </NavLink>
           <button
             onClick={() => {
               const next = theme === 'dark' ? 'light' : 'dark'
