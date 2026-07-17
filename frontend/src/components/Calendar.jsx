@@ -164,7 +164,7 @@ export default function Calendar() {
       {/* Mood legend */}
       <div className="flex flex-wrap items-center gap-3 mb-6 px-1">
         <span className="text-xs font-medium text-custom-muted mr-1">{t('mood')}:</span>
-        {MOOD_COLORS.map((color, i) => (
+        {Object.entries(MOOD_COLORS).map(([i, color]) => (
           <span key={i} className="inline-flex items-center gap-1.5 text-xs text-custom-muted">
             <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
             {i}
