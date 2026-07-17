@@ -24,12 +24,14 @@ def isolated_data_dir(tmp_path, monkeypatch):
 
     import backend.config as config
     import backend.utils as utils
+    import backend.index as index_mod
     monkeypatch.setattr(config, "ENTRIES_DIR", entries_dir)
     monkeypatch.setattr(config, "DATA_DIR", data_dir)
     monkeypatch.setattr(config, "USERS_FILE", os.path.join(data_dir, "users.json"))
     monkeypatch.setattr(config, "MASTER_KEY_FILE", os.path.join(data_dir, "master.key"))
-    # Also patch the local binding in utils (it does `from config import ENTRIES_DIR`)
+    # Also patch the local bindings in modules that do `from config import X`
     monkeypatch.setattr(utils, "ENTRIES_DIR", entries_dir)
+    monkeypatch.setattr(index_mod, "DATA_DIR", data_dir)
 
     yield tmp_path
 

@@ -1,17 +1,23 @@
 from datetime import date, timedelta
 from collections import defaultdict
 from fastapi import APIRouter, Request, HTTPException, Query
-from backend.entry_crud import get_entry, list_user_entries
-from backend.utils import extract_date_from_path
+from backend.entry_crud import get_entry
+from backend.index import query_entries as index_query
 from backend.routers.auth import _get_session
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 
 WEEKDAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
+_EMPTY_STATS = {
+    "total_entries": 0, "avg_mood": 0, "current_streak": 0, "longest_streak": 0,
+    "mood_by_date": [], "mood_distribution": [],
+    "tag_mood_correlation": [], "day_of_week_mood": [], "tag_frequency": [],
+    "scales_by_date": {},
+}
+
 
 def _get_period_key(d: date, period: str) -> tuple[str, date]:
-    """Return (period_key, period_start_date) for grouping."""
     if period == "week":
         iso = d.isocalendar()
         start = d - timedelta(days=d.weekday())
@@ -73,15 +79,8 @@ def get_stats(
     if session is None:
         raise HTTPException(401, "Not authenticated")
 
+    username = session["username"]
     user_key = session["user_key"]
-    entries = list_user_entries(session["username"])
-
-    if not entries:
-        empty = {"total_entries": 0, "avg_mood": 0, "current_streak": 0, "longest_streak": 0,
-                 "mood_by_date": [], "mood_distribution": [],
-                 "tag_mood_correlation": [], "day_of_week_mood": [], "tag_frequency": [],
-                 "scales_by_date": {}}
-        return empty
 
     # Parse filters
     filter_tags = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
@@ -94,6 +93,11 @@ def get_stats(
     except ValueError:
         date_to = None
 
+    # Use index for filtering — avoids decrypting every entry
+    indexed = index_query(username, date_from=date_from, date_to=date_to, tags=filter_tags)
+    if not indexed:
+        return _EMPTY_STATS
+
     # Per-date accumulators
     by_date = defaultdict(lambda: {"moods": [], "count": 0, "scales": defaultdict(list)})
     tag_moods = defaultdict(list)
@@ -101,62 +105,48 @@ def get_stats(
     day_of_week_moods = defaultdict(list)
     all_filtered_dates = []
 
-    for path in entries:
+    for meta in indexed:
         try:
-            entry = get_entry(path, user_key)
-            if entry is None:
-                continue
-            dt = extract_date_from_path(path)
-            if dt is None:
-                continue
-            date_key = dt.date()
-
-            # Date filter
-            if date_from and date_key < date_from:
-                continue
-            if date_to and date_key > date_to:
-                continue
-
-            entry_tags = entry.get("tags", [])
-
-            # Tag filter (entry must match ALL selected tags)
-            if filter_tags:
-                if not all(t in entry_tags for t in filter_tags):
-                    continue
+            date_key = date.fromisoformat(meta["date"])
+            mood_val = meta["mood"]
 
             all_filtered_dates.append(date_key)
-            mood_val = entry.get("mood", 3)
             by_date[date_key]["moods"].append(mood_val)
             by_date[date_key]["count"] += 1
 
-            scales = entry.get("scales", {})
-            if isinstance(scales, dict):
-                for scale_name, scale_val in scales.items():
-                    by_date[date_key]["scales"][scale_name].append(scale_val)
-
-            for tag in entry_tags:
+            for tag in meta["tags"]:
                 tag_moods[tag].append(mood_val)
                 tag_counts[tag] += 1
 
             day_of_week_moods[date_key.weekday()].append(mood_val)
+        except Exception:
+            continue
 
+    # For scales data, we still need to decrypt — but only matching entries
+    for meta in indexed:
+        try:
+            entry = get_entry(meta["path"], user_key)
+            if entry is None:
+                continue
+            scales = entry.get("scales", {})
+            if not isinstance(scales, dict) or not scales:
+                continue
+            date_key = date.fromisoformat(meta["date"])
+            for scale_name, scale_val in scales.items():
+                by_date[date_key]["scales"][scale_name].append(scale_val)
         except Exception:
             continue
 
     if not by_date:
-        empty = {"total_entries": 0, "avg_mood": 0, "current_streak": 0, "longest_streak": 0,
-                 "mood_by_date": [], "mood_distribution": [],
-                 "tag_mood_correlation": [], "day_of_week_mood": [], "tag_frequency": [],
-                 "scales_by_date": {}}
-        return empty
+        return _EMPTY_STATS
 
     dates = sorted(by_date.keys())
     total_entries = sum(d["count"] for d in by_date.values())
     all_moods = [m for d in by_date.values() for m in d["moods"]]
     avg_mood = round(sum(all_moods) / len(all_moods), 1) if all_moods else 0
 
-    current_streak = _calc_streak(dates)
-    longest_streak = _calc_longest_streak(dates)
+    current_streak = _calc_streak(all_filtered_dates)
+    longest_streak = _calc_longest_streak(all_filtered_dates)
 
     # Period-grouped mood chart
     mood_by_period = defaultdict(list)

@@ -50,6 +50,12 @@ app.include_router(freewrite.router)
 @app.on_event("startup")
 def startup():
     ensure_directories()
+    # Initialize index table (no-op if already exists)
+    try:
+        from backend.index import init_index
+        init_index()
+    except Exception:
+        pass
 
 
 @app.get("/api/health")

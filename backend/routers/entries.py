@@ -8,10 +8,9 @@ from backend.entry_crud import (
     update_entry,
     delete_entry,
     get_entries_for_date,
-    list_user_entries,
     get_all_tags_for_user,
 )
-from backend.utils import extract_date_from_path
+from backend.index import query_entries as index_query
 from backend.config import MOOD_COLORS, MOOD_LABELS, ENTRIES_DIR
 from backend.routers.auth import _get_session
 
@@ -71,15 +70,14 @@ def list_entries_by_month(request: Request, year: int, month: int):
 
     username = session["username"]
     user_key = session["user_key"]
-    paths = list_user_entries(username)
+
+    # Use index for fast filtering
+    indexed = index_query(username, year=year, month=month)
 
     entries = []
-    for path in paths:
-        dt = extract_date_from_path(path)
-        if dt is None or dt.year != year or dt.month != month:
-            continue
+    for meta in indexed:
         try:
-            entry = get_entry(path, user_key)
+            entry = get_entry(meta["path"], user_key)
             if entry:
                 entries.append(_format_entry(entry))
         except Exception:

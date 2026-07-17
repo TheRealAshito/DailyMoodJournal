@@ -3,6 +3,7 @@ from datetime import datetime
 from backend.crypto import encrypt_entry, decrypt_entry
 from backend.utils import build_entry_path, parse_entry_text, build_entry_text, list_user_entries, extract_date_from_path
 from backend.config import DATA_VERSION
+from backend.index import add_to_index, update_in_index, remove_from_index
 
 KNOWN_FIELDS = {"title", "date", "mood", "tags", "author", "body", "path", "dailymood_version"}
 
@@ -40,6 +41,14 @@ def create_entry(username: str, entry_data: dict, user_key: bytes) -> str:
 
     with open(path, "wb") as f:
         f.write(ciphertext)
+
+    # Update index (non-blocking — don't fail the write if index breaks)
+    try:
+        index_data = dict(entry_data)
+        index_data["date"] = dt.strftime("%Y-%m-%d %H:%M")
+        add_to_index(username, index_data, path)
+    except Exception:
+        pass
 
     return path
 
@@ -89,6 +98,14 @@ def update_entry(path: str, entry_data: dict, user_key: bytes) -> str:
     with open(path, "wb") as f:
         f.write(ciphertext)
 
+    # Update index
+    try:
+        index_data = dict(entry_data)
+        index_data["date"] = dt.strftime("%Y-%m-%d %H:%M")
+        update_in_index(index_data, path)
+    except Exception:
+        pass
+
     return path
 
 
@@ -96,10 +113,24 @@ def delete_entry(path: str) -> bool:
     if not os.path.exists(path):
         return False
     os.remove(path)
+    try:
+        remove_from_index(path)
+    except Exception:
+        pass
     return True
 
 
 def get_entries_for_date(username: str, date_obj, user_key: bytes) -> list[dict]:
+    from backend.index import query_entries as index_query
+    # Try index first
+    try:
+        results = index_query(username, date_from=date_obj, date_to=date_obj)
+        if results is not None:
+            entries = [{"path": r["path"], "date": datetime.strptime(r["date"], "%Y-%m-%d")} for r in results]
+            return sorted(entries, key=lambda e: e["date"])
+    except Exception:
+        pass
+    # Fallback: filesystem walk
     entries = []
     for path in list_user_entries(username):
         entry_date = extract_date_from_path(path)
@@ -109,6 +140,15 @@ def get_entries_for_date(username: str, date_obj, user_key: bytes) -> list[dict]
 
 
 def get_all_tags_for_user(username: str, user_key: bytes) -> list[str]:
+    from backend.index import get_all_tags as index_tags
+    # Try index first
+    try:
+        tags = index_tags(username)
+        if tags:
+            return tags
+    except Exception:
+        pass
+    # Fallback: decrypt every entry
     tags_set = set()
     for path in list_user_entries(username):
         try:
