@@ -63,6 +63,37 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/api/index-status")
+def index_status():
+    from backend.index import is_index_available, get_index_stats
+    from backend.config import load_users, ENTRIES_DIR
+    import os
+
+    available = is_index_available()
+    result = {"index_available": available, "users": []}
+
+    if not available:
+        return result
+
+    users = load_users()
+    for username in users:
+        user_dir = os.path.join(ENTRIES_DIR, username)
+        file_count = 0
+        if os.path.exists(user_dir):
+            for root, _, files in os.walk(user_dir):
+                file_count += sum(1 for f in files if f.endswith(".enc"))
+
+        stats = get_index_stats(username)
+        result["users"].append({
+            "username": username,
+            "files_on_disk": file_count,
+            "indexed": stats["indexed"],
+            "status": "ok" if stats["indexed"] == file_count else f"mismatch (disk:{file_count} idx:{stats['indexed']})",
+        })
+
+    return result
+
+
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
 
 
