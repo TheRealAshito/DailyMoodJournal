@@ -8,30 +8,34 @@
 | Frontend framework | React 18 + Vite + Tailwind CSS | Full UI control, professional look, fast HMR |
 | Charts | recharts | React-native charting, interactive, no server-side render |
 | Data storage | Encrypted `.enc` files | AES-256-GCM, user owns the raw key material |
+| Metadata index | SQLite (`data/index.db`) | Fast lookups for stats/search/calendar without decrypting every entry |
 | Auth storage | JSON file (`data/users.json`) | Single file, easy to back up, fields are hashed/encrypted |
 | Encryption | `cryptography` library (AES-GCM, PBKDF2) | Industry standard, audited |
 | PDF generation | fpdf2 + DejaVuSans | Unicode font supports emoji/accents/CJK, auto-detects user language |
 | Archive | Python `tarfile` + `zipfile` | Standard library |
 | Sessions | In-memory dict (server-side, 24h TTL) | Session ID via HTTP-only cookie, UEK never touches frontend |
 | i18n | JSON locale files | `en.json` + `pt-BR.json` loaded by React context |
+| Testing | pytest (103 tests) | Covers crypto, entry CRUD, utils, export/import, index |
 | Deployment | Docker multi-stage | Builds React static files, serves via uvicorn |
 
 ## Project Structure
 ```
 DailyMoodJournal/
 ├── backend/                  # FastAPI Python backend
-│   ├── main.py              # App entry, CORS, security headers (CSP, X-Frame-Options, etc.), SPA catch-all route
+│   ├── main.py              # App entry, CORS, security headers, SPA catch-all, /api/constants, /api/index-status
 │   ├── sessions.py          # In-memory session store (24h TTL)
 │   ├── routers/
-│   │   ├── auth.py          # Login, signup, password reset, /me, change password
-│   │   ├── entries.py       # CRUD /entries, /day/{date}, /tags, path traversal protection
-│   │   ├── search.py        # /search?tags=&from_date=&to_date=
-│   │   ├── stats.py         # /stats (streaks, mood data, distribution)
-|   │   ├── settings.py      # /settings (theme, lang, reflection categories, sticky notes)
-|   │   ├── freewrite.py     # /freewrite — session-based CRUD (list, create, get, update, delete)
-|   │   └── export.py        # /export (archive), /export/pdf (PDF), /export/import
+│   │   ├── auth.py          # Login, signup, password reset, /me, change password, lazy index rebuild
+│   │   ├── entries.py       # CRUD /entries, /day/{date}, /tags, path traversal protection (uses index)
+│   │   ├── search.py        # /search?tags=&from_date=&to_date= (uses index for filtering)
+│   │   ├── stats.py         # /stats (uses index for filtering, decrypts only for scales)
+│   │   ├── settings.py      # /settings (uses FastAPI Depends() for auth)
+│   │   ├── freewrite.py     # /freewrite — session-based CRUD
+│   │   └── export.py        # /export (archive), /export/pdf (PDF), /export/import
 │   ├── crypto.py            # AES-256-GCM, PBKDF2 600K, key wrap/unwrap
-│   ├── entry_crud.py        # CRUD on encrypted .enc files (preserves unknown fields)
+│   ├── entry_crud.py        # CRUD on encrypted .enc files, auto-updates index on write
+│   ├── index.py             # SQLite metadata index (WAL mode, auto-rebuildable)
+│   ├── deps.py              # FastAPI dependencies (get_current_session via Depends())
 │   ├── export_import.py     # Build archives, PDF export (fpdf2), process imports
 │   ├── utils.py             # Path builders, YAML frontmatter (via PyYAML)
 │   ├── config.py            # Paths, user I/O, settings migration, mood maps, per-language tags
@@ -39,46 +43,58 @@ DailyMoodJournal/
 │       └── cbt_prompts.py   # 12 cognitive distortions + 30 CBT prompts
 ├── frontend/                # React SPA (Vite + Tailwind)
 │   ├── public/locales/
-│   │   ├── en.json          # English translations (UI + mood/days/months + 64 reflection prompts + 42 CBT keys)
+│   │   ├── en.json          # English translations
 │   │   └── pt-BR.json       # Brazilian Portuguese translations
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── LoginPage.jsx / SignupPage.jsx / ResetPasswordPage.jsx
 │   │   │   ├── Navbar.jsx   # Top nav bar + theme toggle
-|   │   │   ├── Calendar.jsx # Custom month grid with mood-colored ring per day cell, selected/today highlighting, double-click creates entry, date picker
-|   │   │   ├── EntryForm.jsx # New/edit entry + mood emojis + reflection prompts + tag toggle buttons + custom scale sliders
-│   │   │   ├── EntryCard.jsx # Read-only entry with edit/delete buttons
-│   │   │   ├── MoodSlider.jsx # Emoji-based mood selector (0-6) using String.fromCodePoint
-│   │   │   ├── Search.jsx   # Tag + date range filter with results
-|   │   │   ├── Stats.jsx    # recharts bar charts, streak counters, distribution, custom scales bar charts (scales_by_date)
-|   │   │   ├── Settings.jsx # Theme, language, tag management (per-language), reflection categories, custom scales (add/remove), export/import, PDF, password
-│   │   │   ├── HowToUse.jsx # 6-section how-to guide (entries, scales, tags, calendar, export, settings)
-│   │   │   ├── FreeWrite.jsx # Notebook layout: session list sidebar + editor with auto-save
-│   │   │   └── AboutCBT.jsx # 12 cognitive distortions with examples
+│   │   │   ├── Calendar.jsx # Month grid with mood colors from ConstantsContext
+│   │   │   ├── EntryForm.jsx # New/edit entry + mood + reflection prompts + tags + scales
+│   │   │   ├── EntryCard.jsx # Read-only entry with edit/delete (uses ConstantsContext)
+│   │   │   ├── MoodSlider.jsx # Emoji mood selector (uses ConstantsContext)
+│   │   │   ├── Search.jsx   # Tag + date range filter
+│   │   │   ├── Stats.jsx    # recharts bar charts (uses ConstantsContext)
+│   │   │   ├── Settings.jsx # Theme, language, tags, scales, export/import, password
+│   │   │   ├── HowToUse.jsx # How-to guide
+│   │   │   ├── FreeWrite.jsx # Notebook layout with auto-save
+│   │   │   ├── AboutCBT.jsx # CBT education
+│   │   │   └── ErrorBoundary.jsx # Catches render crashes, shows recovery UI
 │   │   ├── contexts/
-|   │   │   ├── AuthContext.jsx # login, signup, logout, session restore, syncs settings from backend
-|   │   │   └── ThemeContext.jsx # dark/light via Tailwind class, toggled from navbar/settings
+│   │   │   ├── AuthContext.jsx # login, signup, logout, session restore
+│   │   │   ├── ThemeContext.jsx # dark/light via Tailwind class
+│   │   │   └── ConstantsContext.jsx # Fetches /api/constants once (mood colors, labels, emojis, tags)
 │   │   ├── api.js           # Axios instance (withCredentials: true)
 │   │   ├── i18n.jsx         # Translation hook + locale loader with caching
-│   │   ├── App.jsx          # Router + auth guard + protected layout
-│   │   └── main.jsx         # React entry (StrictMode)
+│   │   ├── App.jsx          # Router + auth guard + ErrorBoundary
+│   │   └── main.jsx         # React entry (StrictMode, all providers)
 │   ├── index.html
 │   ├── package.json
 │   ├── vite.config.js       # Dev proxy /api → localhost:8501
 │   ├── tailwind.config.js   # Custom mood color palette
 │   └── postcss.config.js
+├── tests/                   # pytest test suite (103 tests)
+│   ├── conftest.py          # Fixtures: isolated data dir, user_key, sample entry
+│   ├── test_crypto.py       # Encryption roundtrips, key wrapping, password hashing
+│   ├── test_entry_crud.py   # CRUD operations, user isolation
+│   ├── test_utils.py        # Path building, YAML parsing, validation
+│   ├── test_export_import.py # Export/import roundtrip, PDF generation
+│   └── test_index.py        # SQLite index operations, CRUD integration
 ├── entries/                 # Created at runtime — encrypted .enc files
 ├── data/
-│   ├── users.json           # User credentials + settings + sticky_note (0o600)
-│   └── master.key           # Auto-generated Fernet key (0o600)
-│   └── {username}_freewrite.json  # Free Write sessions (array of {id, title, content, timestamps})
+│   ├── users.json           # User credentials + settings (0o600)
+│   ├── master.key           # Auto-generated key (0o600)
+│   ├── index.db             # SQLite metadata index (auto-created, rebuildable)
+│   └── {username}_freewrite.json  # Free Write sessions
 ├── Dockerfile               # Multi-stage (Node build → Python serve)
 ├── docker-compose.yml
 ├── .gitignore
-├── .dockerignore
-├── requirements.txt
+├── .dockerignore            # Excludes tests/, requirements-dev.txt
+├── requirements.txt         # Production dependencies (no numpy)
+├── requirements-dev.txt     # Dev dependencies (+ pytest)
 ├── goal.md
-└── architecture.md
+├── architecture.md
+└── REFACTOR_PLAN.md         # Refactoring roadmap
 ```
 
 ## API Endpoints
@@ -86,34 +102,71 @@ DailyMoodJournal/
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/health` | Server health check |
+| GET | `/api/constants` | Mood colors, labels, emojis, default tags (single source of truth) |
+| GET | `/api/index-status` | Index diagnostics (per-user entry counts, disk vs indexed) |
 | GET | `/api/auth/me` | Current user info + settings |
-| POST | `/api/auth/login` | Login, sets session cookie |
+| POST | `/api/auth/login` | Login, sets session cookie, triggers lazy index rebuild if needed |
 | POST | `/api/auth/signup` | Create account + auto-login |
 | POST | `/api/auth/logout` | Clear session |
 | POST | `/api/auth/password-reset-request` | Get security question |
 | POST | `/api/auth/password-reset-verify` | Verify answer, get reset token |
 | POST | `/api/auth/password-reset-complete` | Set new password |
 | PUT | `/api/auth/password` | Change password (authenticated) |
-| GET | `/api/entries?year=&month=` | List entry metadata for a month |
-| GET | `/api/entries/day/{date}` | Entries for a specific day |
-| GET | `/api/entries/tags/all` | All unique tags for user |
+| GET | `/api/entries?year=&month=` | List entry metadata for a month (uses index) |
+| GET | `/api/entries/day/{date}` | Entries for a specific day (uses index) |
+| GET | `/api/entries/tags/all` | All unique tags for user (uses index) |
 | GET | `/api/entries/{path}` | Get single entry (decrypted, path-validated) |
-| POST | `/api/entries` | Create entry |
-| PUT | `/api/entries/{path}` | Update entry |
-| DELETE | `/api/entries/{path}` | Delete entry |
-| GET | `/api/search?tags=&from_date=&to_date=` | Search entries |
-| GET | `/api/stats?period=day|week|month&from_date=&to_date=&tags=` | Streaks, mood averages, tag correlation, day-of-week breakdown, tag frequency, distribution, scales (with date/tag/period filters) |
-| GET | `/api/settings` | Get user preferences (theme, language, tags, scales, sticky_note) |
-| PUT | `/api/settings` | Update user preferences |
-| GET | `/api/freewrite` | List all free write sessions (metadata) |
+| POST | `/api/entries` | Create entry (auto-updates index) |
+| PUT | `/api/entries/{path}` | Update entry (auto-updates index) |
+| DELETE | `/api/entries/{path}` | Delete entry (auto-updates index) |
+| GET | `/api/search?tags=&from_date=&to_date=` | Search entries (uses index for filtering) |
+| GET | `/api/stats?period=day\|week\|month&from_date=&to_date=&tags=` | Stats (uses index for filtering, decrypts only for scales) |
+| GET | `/api/settings` | Get user preferences |
+| PUT | `/api/settings` | Update user preferences (uses FastAPI Depends()) |
+| GET | `/api/freewrite` | List all free write sessions |
 | POST | `/api/freewrite` | Create a new free write session |
 | GET | `/api/freewrite/{id}` | Get full session content |
 | PUT | `/api/freewrite/{id}` | Update session title and content |
 | DELETE | `/api/freewrite/{id}` | Delete a free write session |
-| GET | `/api/export?format=tar.gz|zip` | Download decrypted archive |
+| GET | `/api/export?format=tar.gz\|zip` | Download decrypted archive |
 | GET | `/api/export/pdf?from_date=&to_date=` | Download PDF with optional date range |
-| POST | `/api/export/import` | Upload archive or .md/.txt files — returns `{imported, skipped, files[]}` with per-file status |
-| GET | `/{full_path:path}` | SPA catch-all — serves index.html for all client-side routes |
+| POST | `/api/export/import` | Upload archive or .md/.txt files |
+| GET | `/{full_path:path}` | SPA catch-all — serves index.html |
+
+## SQLite Metadata Index
+
+The index (`data/index.db`) stores entry metadata for fast lookups without decrypting files.
+
+### Schema
+```sql
+CREATE TABLE entry_index (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    path TEXT NOT NULL UNIQUE,
+    date TEXT NOT NULL,        -- YYYY-MM-DD
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    mood INTEGER NOT NULL,
+    tags TEXT NOT NULL,        -- JSON array
+    title TEXT NOT NULL,
+    dailymood_version TEXT
+);
+CREATE INDEX idx_user_date ON entry_index(username, date);
+CREATE INDEX idx_user_year_month ON entry_index(username, year, month);
+```
+
+### How it works
+- **Write path**: `create_entry()`, `update_entry()`, `delete_entry()` automatically update the index
+- **Read path**: Stats, search, and entries routers query the index first, then decrypt only matching entries
+- **Migration**: On first login, if user has entries but no index, a background thread rebuilds it
+- **Rebuild**: Index can be deleted and rebuilt at any time from .enc files (it's a cache)
+- **Startup**: `init_index()` creates the table if it doesn't exist
+- **WAL mode**: SQLite uses Write-Ahead Logging for better concurrent access
+
+### Performance impact
+- Before: Every stats/search/calendar page decrypted ALL entries
+- After: Only entries matching date/tag filters are decrypted
+- For scales data (not in index), matching entries are decrypted on demand
 
 ## Authentication & Sessions
 
@@ -123,7 +176,7 @@ DailyMoodJournal/
 4. **Logout**: Session deleted, cookie cleared, UEK discarded
 5. **Path traversal**: All entry endpoints validate the requested path is within the user's entries directory
 6. **Username validation**: Regex `^[a-zA-Z0-9_\\-\\.]{2,32}$`
-7. **Login errors**: Generic \"Invalid credentials\" for both wrong username and wrong password
+7. **Login errors**: Generic "Invalid credentials" for both wrong username and wrong password
 
 ## Data Model & Versioning
 
@@ -138,20 +191,20 @@ date: 2026-06-23 12:00
 mood: 4
 tags: [work, gratitude]
 author: username
-dailymood_version: '1.0'       # ← schema version of the app that created this entry
+dailymood_version: '1.0'
 ---
 Body text here...
 ```
 
 - `dailymood_version` is stamped on every create/update and preserved through export/import
 - Unknown frontmatter fields are never dropped — they survive the full CRUD + export + import cycle
-- The version field enables future schema migrations (old entries can be identified and migrated on read)
+- The version field enables future schema migrations
 
 ### User Database (`data/users.json`)
 
 ```json
 {
-  "_data_version": "1.0",       # ← schema version, stripped on load
+  "_data_version": "1.0",
   "username": {
     "salt": "...",
     "password_hash": "...",
@@ -160,24 +213,13 @@ Body text here...
 }
 ```
 
-- `_data_version` is auto-added on every write, silently stripped on read
-- Missing `_data_version` implies v1.0 (backward compatible with unversioned files)
-
 ### Export Format
 
 Exported `.md` files are plaintext YAML frontmatter + Markdown body. They carry `dailymood_version` so re-importing preserves the originating schema version. Timestamp collisions on re-import are automatically deconflicted by minute offsets (1–59). The import API returns per-file results: `{imported, skipped, files: [{filename, status, reason?}]}`.
 
 ### PDF Export
 
-PDFs are generated with fpdf2 using DejaVuSans Unicode font (installed via `fonts-dejavu-core` in the Docker image; falls back to bundled/system path). The PDF is fully localized based on the user's language setting:
-
-| Label | English | Portuguese (pt-BR) |
-|-------|---------|-------------------|
-| Title | DailyMood Journal | Diário do Humor |
-| Mood labels | Terrible → Amazing | Péssimo → Incrível |
-| Date format | DD/MM/YYYY HH:MM | DD/MM/YYYY HH:MM |
-
-Characters above U+FFFF (emoji supplementary plane) are stripped gracefully to prevent font rendering errors. The x position is reset after `multi_cell()` calls to prevent fpdf2 2.8.x from leaving the cursor at the right margin.
+PDFs are generated with fpdf2 using DejaVuSans Unicode font. Characters above U+FFFF (emoji supplementary plane) are stripped gracefully. The PDF is fully localized based on the user's language setting.
 
 ### Encryption (Three-Key Hierarchy)
 
@@ -201,19 +243,11 @@ Characters above U+FFFF (emoji supplementary plane) are stripped gracefully to p
 - User key encrypted with KEK derived from password (PBKDF2 HMAC-SHA256, 600K iterations)
 - Security answer also derives a KEK — password reset without data loss
 
-### Forward Compatibility
-
-- **create_entry / update_entry**: Preserve any unknown frontmatter fields passed in entry_data. `dailymood_version` is auto-stamped.
-- **build_export_archive**: Export ALL frontmatter fields (not just known ones), including `dailymood_version`
-- **_process_plain_file**: Import/restore unknown fields from exported .md files; timestamp collisions auto-deconflicted
-- **get_user_settings**: Falls back from `reflection_categories` → `cbt_enabled_categories` (migration path)
-- **save_user_settings**: Saves any key passed (not restricted to a fixed list)
-
 ## Security
 
 ### Headers
 
-Every response from the backend includes security headers applied by a Starlette `BaseHTTPMiddleware`:
+Every response includes security headers via Starlette middleware:
 
 | Header | Value | Purpose |
 |--------|-------|---------|
@@ -225,21 +259,11 @@ Every response from the backend includes security headers applied by a Starlette
 ### 100% Local Design
 
 The app makes **zero external network calls**:
-- **Frontend**: All API requests go to `/api` (same origin). No CDN, no external fonts, no analytics scripts.
+- **Frontend**: All API requests go to `/api` (same origin). No CDN, no external fonts, no analytics.
 - **Backend**: No HTTP/HTTPS client calls to any external service.
 - **Dependencies**: No telemetry/analytics packages in npm or Python dependencies.
 - **CORS**: Only allows `localhost` origins.
 - **Docker HEALTHCHECK**: Hits `http://localhost:8501/api/health` — container-internal only.
-- **Locale files**: Loaded via `fetch('/locales/{lang}.json')` from the same origin.
-
-### Export Filenames
-
-Archive and PDF filenames are localized based on the user's language setting:
-
-| Language | PDF file | Archive file |
-|----------|----------|--------------|
-| English | `dailymood_journal_{user}.pdf` | `dailymood_export_{user}_{ts}.tar.gz` |
-| Português | `diario_humor_{user}.pdf` | `exportacao_humor_{user}_{ts}.tar.gz` |
 
 ## Mood System
 
@@ -253,28 +277,24 @@ Archive and PDF filenames are localized based on the user's language setting:
 | 5 | Great/Ótimo | 😊 | `#43a047` |
 | 6 | Amazing/Incrível | 🤩 | `#2e7d32` |
 
-Emoji characters use `String.fromCodePoint()` in JSX expressions to avoid encoding issues when pushing through GitHub's API. Labels are fully localized via `t('mood_0')`–`t('mood_6')` keys.
+Mood colors, labels, and emojis are served from `/api/constants` (single source of truth). The frontend fetches them once via `ConstantsContext` and shares them across all components. Labels are fully localized via `t('mood_0')`–`t('mood_6')` keys.
 
 ## Frontend Architecture
 
-- **SPA routing**: FastAPI catch-all route `/{full_path:path}` serves `index.html` for all client-side routes
-- **Navigation**: Top navbar with tabs (Journal, New Entry, Free Write, Search, Stats, About CBT). Settings (⚙️) and How to Use (❓) are icon buttons in the header next to the theme toggle. Language switcher is in Settings.
+- **SPA routing**: FastAPI catch-all route serves `index.html` for all client-side routes
+- **Navigation**: Top navbar with tabs (Journal, New Entry, Free Write, Search, Stats, About CBT). Settings and How to Use are icon buttons. Language switcher is in Settings.
 - **Auth guard**: App.jsx checks `AuthContext.user` — unauthenticated users see login/signup/reset routes
-|- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing. Contains ~235 keys including UI strings, mood labels (`mood_0`–`mood_6`), day names (`day_0`–`day_6`), month names (`month_0`–`month_11`), 64 reflection prompts, 42 CBT education keys, and how-to-use/stats section keys. Locale and theme are synced from backend user settings on login via `App.jsx` `useEffect` — `changeLocale(user.settings.language)` + `setTheme(user.settings.theme)`.
-|- **Theme**: Tailwind `class` strategy — `dark` class on `<html>` via `ThemeContext`. Theme toggle in both navbar and Settings immediately saves to backend via `api.put('/settings', { theme })`. No localStorage — fully server-authoritative. On login, theme is restored from `user.settings.theme`.
-|- **Date/time**: All timestamps use the browser's local timezone via `Date` getters (`getFullYear`, `getMonth`, `getDate`, `getHours`, `getMinutes`). No UTC `.toISOString()` is used.
-|- **Stats**: Full analytics suite with **date range filter** (from/to), **tag multi-select filter**, and **period grouping** (daily/weekly/monthly). Four summary cards (total entries, avg mood, current streak, longest streak) react to filters.
-|  - **Mood over time** — bar chart colored by mood value, grouped by the selected period
-|  - **Tag mood correlation** — horizontal bar chart showing avg mood per tag, revealing how tags correlate with emotional state
-|  - **Day of week breakdown** — avg mood per weekday to spot weekly patterns
-|  - **Mood distribution** — histogram of all mood levels (0–6)
-|  - **Tag frequency** — horizontal bar chart of most used tags
-|  - **Custom scales** — per-scale bar charts (grouped by selected period)
-|- **Tags**: Stored per-language as a dict `{"en": [...], "pt-BR": [...]}` in user settings.
-- **Custom Scales**: Users can create numeric scales (e.g. "Anxiety" 0-10, "Energy" 0-5) in Settings. Each scale has a name, min (0), max (1-100), and step. Scales appear as range sliders in EntryForm alongside the mood selector. Data stored per-entry in `scales` frontmatter field. Stats page renders `scales_by_date` as recharts bar charts.
-- **Free Write**: Dedicated page (`/freewrite`) with a notebook layout — session list sidebar on the left, editor on the right. Multiple sessions are stored in `data/{username}_freewrite.json` (plain JSON, no encryption — intentionally, it's free-form reflection, not a journal entry). Each session has an `{id, title, content, created_at, updated_at}`. Create new sessions from the sidebar, switch between them, and delete stale ones. Auto-saves 800ms after the user stops typing. Word count displayed in the header. Accessible from the navbar (📝 icon).
-- **Brand color**: Cyan-500 (`#06b6d4`) is the primary accent across the UI — buttons, nav active state, links, spinners, checkboxes, range sliders. The supporting palette shifts one shade lighter for focus rings (cyan-400, `#22d3ee`) and one shade darker for hover states (cyan-600, `#0891b2`).
-|
+- **Error boundary**: `ErrorBoundary.jsx` wraps the protected layout — catches render crashes and shows a recovery UI with reload button
+- **Constants**: `ConstantsContext.jsx` fetches `/api/constants` once on app load, provides mood colors/labels/emojis/tags via context. Fallback values used if fetch fails.
+- **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing. Locale and theme are synced from backend user settings on login.
+- **Theme**: Tailwind `class` strategy — `dark` class on `<html>` via `ThemeContext`. Fully server-authoritative (no localStorage).
+- **Date/time**: All timestamps use the browser's local timezone via `Date` getters.
+- **Stats**: Full analytics suite with date range filter, tag multi-select, and period grouping (daily/weekly/monthly). Uses SQLite index for fast filtering.
+- **Tags**: Stored per-language as a dict `{"en": [...], "pt-BR": [...]}` in user settings.
+- **Custom Scales**: Users can create numeric scales in Settings. Data stored per-entry in `scales` frontmatter field.
+- **Free Write**: Notebook layout with session list sidebar + editor. Auto-saves 800ms after typing stops.
+- **Brand color**: Cyan-500 (`#06b6d4`) is the primary accent.
+
 ## Deployment
 
 ### Docker (recommended)
@@ -293,15 +313,21 @@ cd frontend && npm install && npm run dev
 # Access at http://localhost:5173 (proxies API to :8501)
 ```
 
+### Testing
+```bash
+pip install -r requirements-dev.txt
+pytest tests/ -v
+```
+
 ### Volumes
 | Host path | Container path | Purpose |
 |-----------|---------------|---------|
 | `./entries` | `/app/entries` | Encrypted journal entries |
-| `./data` | `/app/data` | users.json + master.key |
+| `./data` | `/app/data` | users.json + master.key + index.db + freewrite JSON |
 
 ### Docker Image
 
-Multi-stage build: Node 20 slim builds the React frontend → Python 3.11 slim runs the app. The image installs `fonts-dejavu-core` (provides DejaVuSans.ttf for PDF Unicode support), `gcc` (build dependency), and all Python packages from `requirements.txt`.
+Multi-stage build: Node 20 slim builds the React frontend → Python 3.11 slim runs the app. The image installs `fonts-dejavu-core` (DejaVuSans.ttf for PDF), `gcc` (build dependency), and Python packages from `requirements.txt`. Tests and dev dependencies are excluded via `.dockerignore`.
 
 ## Dependencies
 
@@ -312,8 +338,13 @@ PyYAML>=6.0
 fastapi>=0.110
 uvicorn>=0.29
 python-multipart>=0.0.9
-numpy>=1.24
 fpdf2>=2.7
+```
+
+### Dev (requirements-dev.txt)
+```
+(all of the above)
+pytest>=8.0
 ```
 
 ### Frontend (package.json)
