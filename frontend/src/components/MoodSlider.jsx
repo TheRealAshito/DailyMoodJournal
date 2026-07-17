@@ -1,21 +1,21 @@
 import { useI18n } from '../i18n'
-
-const MOOD_EMOJIS = ['\u{1F61E}', '\u{1F622}', '\u{1F615}', '\u{1F610}', '\u{1F642}', '\u{1F60A}', '\u{1F929}']
+import { useConstants } from '../contexts/ConstantsContext'
 
 export default function MoodSlider({ value, onChange, disabled }) {
   const { t } = useI18n()
+  const { mood_emojis: MOOD_EMOJIS } = useConstants()
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium">{t('mood')}</label>
       <div className="flex items-center gap-1">
-        {MOOD_EMOJIS.map((emoji, i) => (
+        {Object.entries(MOOD_EMOJIS).map(([i, emoji]) => (
           <button
             key={i}
             type="button"
             disabled={disabled}
-            onClick={() => onChange(i)}
+            onClick={() => onChange(Number(i))}
             className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
-              value === i
+              value === Number(i)
                 ? 'ring-2 ring-cyan-400 scale-110'
                 : 'hover:scale-105 opacity-60 hover:opacity-100'
             }`}

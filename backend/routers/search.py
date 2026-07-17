@@ -1,9 +1,12 @@
 from datetime import date
+import logging
 from fastapi import APIRouter, Request, HTTPException, Query
 from backend.entry_crud import get_entry
 from backend.index import query_entries as index_query
 from backend.config import MOOD_COLORS, MOOD_LABELS
 from backend.routers.auth import _get_session
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/search", tags=["search"])
 
@@ -53,7 +56,8 @@ def search_entries(
                 "mood_color": MOOD_COLORS.get(entry.get("mood", 3), MOOD_COLORS[3]),
                 "mood_label": MOOD_LABELS.get(entry.get("mood", 3), "Unknown"),
             })
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Search: failed to process {meta.get('path', '?')}: {e}")
             continue
 
     results.sort(key=lambda e: e["date"], reverse=True)

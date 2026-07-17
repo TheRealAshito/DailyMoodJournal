@@ -1,4 +1,5 @@
 import os
+import logging
 from datetime import datetime, date
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
@@ -13,6 +14,8 @@ from backend.entry_crud import (
 from backend.index import query_entries as index_query
 from backend.config import MOOD_COLORS, MOOD_LABELS, ENTRIES_DIR
 from backend.routers.auth import _get_session
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
 
@@ -80,7 +83,8 @@ def list_entries_by_month(request: Request, year: int, month: int):
             entry = get_entry(meta["path"], user_key)
             if entry:
                 entries.append(_format_entry(entry))
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Entries: failed to process {meta.get('path', '?')}: {e}")
             continue
 
     entries.sort(key=lambda e: e["date"], reverse=True)

@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from backend.config import get_user_settings, save_user_settings
-from backend.routers.auth import _get_session
+from backend.deps import get_current_session
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -15,19 +15,12 @@ class SettingsUpdate(BaseModel):
 
 
 @router.get("")
-def read_settings(request: Request):
-    session = _get_session(request)
-    if session is None:
-        raise HTTPException(401, "Not authenticated")
+def read_settings(session: dict = Depends(get_current_session)):
     return get_user_settings(session["username"])
 
 
 @router.put("")
-def update_settings(request: Request, body: SettingsUpdate):
-    session = _get_session(request)
-    if session is None:
-        raise HTTPException(401, "Not authenticated")
-
+def update_settings(body: SettingsUpdate, session: dict = Depends(get_current_session)):
     updates = {}
     if body.theme is not None:
         updates["theme"] = body.theme

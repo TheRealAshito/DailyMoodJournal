@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts'
 import api from '../api'
 import { useI18n } from '../i18n'
-
-const MOOD_COLORS = ['#4a148c', '#6a1b9a', '#9c27b0', '#9e9e9e', '#66bb6a', '#43a047', '#2e7d32']
+import { useConstants } from '../contexts/ConstantsContext'
 
 const DAY_KEYS = ['day_0','day_1','day_2','day_3','day_4','day_5','day_6']
 
@@ -23,6 +22,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function Stats() {
   const { t, locale } = useI18n()
+  const { mood_colors: MOOD_COLORS } = useConstants()
 
   // Filter state
   const [fromDate, setFromDate] = useState('')
