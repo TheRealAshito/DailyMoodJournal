@@ -98,6 +98,19 @@ def login(body: LoginRequest, response: Response):
     sid = session_store.create(body.username, user_key)
     _set_session_cookie(response, sid)
 
+    # Lazy index rebuild for migration (existing entries but no index)
+    try:
+        from backend.index import is_index_available, get_index_stats, rebuild_index
+        from backend.utils import list_user_entries
+        import threading
+        if is_index_available():
+            stats = get_index_stats(body.username)
+            file_count = len(list_user_entries(body.username))
+            if stats["indexed"] == 0 and file_count > 0:
+                threading.Thread(target=rebuild_index, args=(body.username, user_key), daemon=True).start()
+    except Exception:
+        pass
+
     return {
         "username": body.username,
         "settings": get_user_settings(body.username),
