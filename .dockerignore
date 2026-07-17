@@ -3,7 +3,10 @@ __pycache__/
 .git/
 .gitignore
 README.md
+REFACTOR_PLAN.md
 venv/
 .venv/
 entries/
 data/
+tests/
+requirements-dev.txt

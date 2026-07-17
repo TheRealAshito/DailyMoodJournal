@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 from datetime import datetime
@@ -18,14 +19,14 @@ def _load_sessions(username: str) -> list:
     if not os.path.exists(path):
         return []
     with open(path, "r", encoding="utf-8") as f:
-        return __import__("json").load(f)
+        return json.load(f)
 
 
 def _save_sessions(username: str, sessions: list):
     path = _sessions_path(username)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
-        __import__("json").dump(sessions, f, indent=2, ensure_ascii=False)
+        json.dump(sessions, f, indent=2, ensure_ascii=False)
 
 
 class CreateFreeWrite(BaseModel):

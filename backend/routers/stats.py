@@ -1,6 +1,5 @@
 from datetime import date, timedelta
 from collections import defaultdict
-import numpy as np
 from fastapi import APIRouter, Request, HTTPException, Query
 from backend.entry_crud import get_entry, list_user_entries
 from backend.utils import extract_date_from_path
@@ -154,7 +153,7 @@ def get_stats(
     dates = sorted(by_date.keys())
     total_entries = sum(d["count"] for d in by_date.values())
     all_moods = [m for d in by_date.values() for m in d["moods"]]
-    avg_mood = round(np.mean(all_moods), 1) if all_moods else 0
+    avg_mood = round(sum(all_moods) / len(all_moods), 1) if all_moods else 0
 
     current_streak = _calc_streak(dates)
     longest_streak = _calc_longest_streak(dates)
