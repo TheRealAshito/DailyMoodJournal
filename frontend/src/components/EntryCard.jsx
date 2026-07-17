@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useI18n } from '../i18n'
-const MOOD_COLORS = ['#4a148c', '#6a1b9a', '#9c27b0', '#9e9e9e', '#66bb6a', '#43a047', '#2e7d32']
+import { useConstants } from '../contexts/ConstantsContext'
 
 export default function EntryCard({ entry }) {
   const { t } = useI18n()
+  const { mood_colors: MOOD_COLORS } = useConstants()
   const navigate = useNavigate()
   const mood = entry.mood ?? 3
 

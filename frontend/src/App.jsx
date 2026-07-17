@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useTheme } from './contexts/ThemeContext'
 import { useI18n } from './i18n'
+import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import LoginPage from './components/LoginPage'
 import SignupPage from './components/SignupPage'
@@ -74,9 +75,11 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/*" element={<ProtectedLayout />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/*" element={<ProtectedLayout />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </ErrorBoundary>
   )
 }

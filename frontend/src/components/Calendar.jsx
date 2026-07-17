@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useI18n } from '../i18n'
+import { useConstants } from '../contexts/ConstantsContext'
 import EntryCard from './EntryCard'
-
-const MOOD_COLORS = ['#4a148c', '#6a1b9a', '#9c27b0', '#9e9e9e', '#66bb6a', '#43a047', '#2e7d32']
 
 const DAY_KEYS = ['day_0','day_1','day_2','day_3','day_4','day_5','day_6']
 
@@ -33,6 +32,7 @@ function localDateStr(d) {
 
 export default function Calendar() {
   const { t } = useI18n()
+  const { mood_colors: MOOD_COLORS } = useConstants()
   const navigate = useNavigate()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())

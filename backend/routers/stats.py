@@ -1,9 +1,12 @@
 from datetime import date, timedelta
 from collections import defaultdict
+import logging
 from fastapi import APIRouter, Request, HTTPException, Query
 from backend.entry_crud import get_entry
 from backend.index import query_entries as index_query
 from backend.routers.auth import _get_session
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 
@@ -119,7 +122,8 @@ def get_stats(
                 tag_counts[tag] += 1
 
             day_of_week_moods[date_key.weekday()].append(mood_val)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Stats: failed to process index entry: {e}")
             continue
 
     # For scales data, we still need to decrypt — but only matching entries
@@ -134,7 +138,8 @@ def get_stats(
             date_key = date.fromisoformat(meta["date"])
             for scale_name, scale_val in scales.items():
                 by_date[date_key]["scales"][scale_name].append(scale_val)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Stats: failed to decrypt entry for scales: {e}")
             continue
 
     if not by_date:

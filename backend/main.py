@@ -63,6 +63,17 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/api/constants")
+def constants():
+    from backend.config import MOOD_COLORS, MOOD_LABELS, MOOD_EMOJIS, DEFAULT_TAGS
+    return {
+        "mood_colors": MOOD_COLORS,
+        "mood_labels": MOOD_LABELS,
+        "mood_emojis": MOOD_EMOJIS,
+        "default_tags": DEFAULT_TAGS,
+    }
+
+
 @app.get("/api/index-status")
 def index_status():
     from backend.index import is_index_available, get_index_stats
