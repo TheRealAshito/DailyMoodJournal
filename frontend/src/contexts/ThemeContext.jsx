@@ -3,7 +3,11 @@ import { createContext, useContext, useState, useEffect } from 'react'
 const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light')
+  const [theme, setTheme] = useState(() => {
+    // Default to dark; apply the class immediately to avoid flash
+    document.documentElement.classList.add('dark')
+    return 'dark'
+  })
 
   useEffect(() => {
     const html = document.documentElement
