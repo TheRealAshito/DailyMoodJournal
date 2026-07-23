@@ -2,9 +2,11 @@ from datetime import date, timedelta
 from collections import defaultdict
 import logging
 from fastapi import APIRouter, Request, HTTPException, Query
+from fastapi.responses import Response
 from backend.entry_crud import get_entry
 from backend.index import query_entries as index_query
 from backend.routers.auth import _get_session
+from backend.config import get_user_settings, EXPORT_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -228,3 +230,41 @@ def get_stats(
         "tag_frequency": tag_frequency,
         "scales_by_date": dict(scales_by_date),
     }
+
+
+@router.get("/pdf")
+def export_stats_pdf(
+    request: Request,
+    period: str = Query("day", pattern=r"^(day|week|month)$"),
+    from_date: str = Query(""),
+    to_date: str = Query(""),
+    tags: str = Query(""),
+):
+    """Generate a PDF report of stats with labeled charts."""
+    from backend.stats_pdf import build_stats_pdf
+    from datetime import datetime
+
+    session = _get_session(request)
+    if session is None:
+        raise HTTPException(401, "Not authenticated")
+
+    # Reuse the same stats computation
+    stats_data = get_stats(request, period, from_date, to_date, tags)
+
+    if not stats_data or stats_data.get("total_entries", 0) == 0:
+        raise HTTPException(404, "No entries to generate stats PDF")
+
+    pdf_bytes = build_stats_pdf(session["username"], stats_data)
+    if pdf_bytes is None:
+        raise HTTPException(500, "Failed to generate stats PDF")
+
+    settings = get_user_settings(session["username"])
+    lang = settings.get("language", "en")
+    base_name = EXPORT_NAMES.get(lang, EXPORT_NAMES["en"])["journal"]
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={base_name}_stats_{session['username']}_{ts}.pdf"},
+    )
