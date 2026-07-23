@@ -1,11 +1,15 @@
 import json
 import os
 import uuid
+import logging
 from datetime import datetime
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel
 from backend.routers.auth import _get_session
-from backend.config import DATA_DIR
+from backend.config import DATA_DIR, get_user_settings, EXPORT_NAMES
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/freewrite", tags=["freewrite"])
 
@@ -55,6 +59,43 @@ def list_sessions(request: Request):
             for s in sessions
         ]
     }
+
+
+@router.get("/export/pdf")
+def export_pdf(request: Request, ids: str = Query("")):
+    """Export free write sessions as PDF. Pass ?ids=id1,id2 for specific sessions, or omit for all."""
+    from backend.freewrite_pdf import build_freewrite_pdf
+
+    session = _get_session(request)
+    if session is None:
+        raise HTTPException(401, "Not authenticated")
+
+    username = session["username"]
+    all_sessions = _load_sessions(username)
+
+    if ids:
+        id_list = [i.strip() for i in ids.split(",") if i.strip()]
+        selected = [s for s in all_sessions if s["id"] in id_list]
+    else:
+        selected = all_sessions
+
+    if not selected:
+        raise HTTPException(404, "No sessions to export")
+
+    pdf_bytes = build_freewrite_pdf(username, selected)
+    if pdf_bytes is None:
+        raise HTTPException(500, "Failed to generate PDF")
+
+    settings = get_user_settings(username)
+    lang = settings.get("language", "en")
+    base_name = EXPORT_NAMES.get(lang, EXPORT_NAMES["en"])["journal"]
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={base_name}_freewrite_{username}_{ts}.pdf"},
+    )
 
 
 @router.post("")
