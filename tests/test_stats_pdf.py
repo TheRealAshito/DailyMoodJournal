@@ -8,6 +8,9 @@ from backend.stats_pdf import (
     _make_tag_chart,
     _make_custom_scale_chart,
 )
+from backend.export_import import PDF_LANG
+
+LANG = PDF_LANG["en"]
 
 
 SAMPLE_STATS = {
@@ -60,33 +63,33 @@ SAMPLE_STATS = {
 
 class TestChartGeneration:
     def test_mood_time_chart_returns_png(self):
-        buf = _make_mood_time_chart(SAMPLE_STATS["mood_by_date"])
+        buf = _make_mood_time_chart(SAMPLE_STATS["mood_by_date"], LANG)
         assert buf is not None
         assert buf.read(4) == b"\x89PNG"
 
     def test_mood_time_chart_empty_data(self):
-        assert _make_mood_time_chart([]) is None
+        assert _make_mood_time_chart([], LANG) is None
 
     def test_mood_distribution_chart(self):
-        buf = _make_mood_distribution_chart(SAMPLE_STATS["mood_distribution"])
+        buf = _make_mood_distribution_chart(SAMPLE_STATS["mood_distribution"], LANG)
         assert buf is not None
         assert buf.read(4) == b"\x89PNG"
 
     def test_day_of_week_chart(self):
-        buf = _make_day_of_week_chart(SAMPLE_STATS["day_of_week_mood"])
+        buf = _make_day_of_week_chart(SAMPLE_STATS["day_of_week_mood"], LANG)
         assert buf is not None
         assert buf.read(4) == b"\x89PNG"
 
     def test_tag_chart(self):
-        buf = _make_tag_chart(SAMPLE_STATS["tag_mood_correlation"])
+        buf = _make_tag_chart(SAMPLE_STATS["tag_mood_correlation"], LANG)
         assert buf is not None
         assert buf.read(4) == b"\x89PNG"
 
     def test_tag_chart_empty(self):
-        assert _make_tag_chart([]) is None
+        assert _make_tag_chart([], LANG) is None
 
     def test_custom_scale_chart(self):
-        buf = _make_custom_scale_chart("Anxiety", SAMPLE_STATS["scales_by_date"]["Anxiety"])
+        buf = _make_custom_scale_chart("Anxiety", SAMPLE_STATS["scales_by_date"]["Anxiety"], LANG)
         assert buf is not None
         assert buf.read(4) == b"\x89PNG"
 

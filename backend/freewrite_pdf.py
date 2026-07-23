@@ -41,7 +41,7 @@ def build_freewrite_pdf(username: str, sessions: list[dict]) -> bytes | None:
 
     # Title page
     pdf.set_font("DejaVuSans", "B", 22)
-    pdf.cell(0, 12, _clean_pdf_text(f"{lang_data['title']} — Free Write"), align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 12, _clean_pdf_text(f"{lang_data['title']} — {lang_data['fw_suffix']}"), align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("DejaVuSans", "", 10)
     pdf.cell(0, 7, f"{lang_data['user']}: {username}", align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.cell(0, 7, f"{lang_data['exported']}: {datetime.now().strftime('%d/%m/%Y')}", align="C", new_x="LMARGIN", new_y="NEXT")
@@ -52,7 +52,7 @@ def build_freewrite_pdf(username: str, sessions: list[dict]) -> bytes | None:
         if i > 0:
             pdf.add_page()
 
-        title = session.get("title", "Untitled")
+        title = session.get("title", lang_data["fw_untitled"])
         content = session.get("content", "")
         updated = session.get("updated_at", "")
 
@@ -68,7 +68,7 @@ def build_freewrite_pdf(username: str, sessions: list[dict]) -> bytes | None:
         if updated:
             try:
                 dt = datetime.fromisoformat(updated)
-                pdf.cell(0, 5, f"  Last updated: {dt.strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT")
+                pdf.cell(0, 5, f"  {lang_data['fw_last_updated']}: {dt.strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT")
             except (ValueError, TypeError):
                 pass
 

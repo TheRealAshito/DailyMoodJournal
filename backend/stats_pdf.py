@@ -29,7 +29,7 @@ CHART_DPI = 150
 CHART_FIGWIDTH = 7.5  # inches — fits well in A4 PDF
 
 
-def _make_mood_time_chart(mood_by_date: list[dict]) -> io.BytesIO:
+def _make_mood_time_chart(mood_by_date: list[dict], lang_data: dict) -> io.BytesIO:
     """Bar chart: mood over time with value labels and date labels."""
     if not mood_by_date:
         return None
@@ -48,10 +48,10 @@ def _make_mood_time_chart(mood_by_date: list[dict]) -> io.BytesIO:
 
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
-    ax.set_ylabel("Mood", fontsize=10)
+    ax.set_ylabel(lang_data["chart_y_mood"], fontsize=10)
     ax.set_ylim(0, 7)
     ax.yaxis.set_major_locator(mticker.MultipleLocator(1))
-    ax.set_title("Mood Over Time", fontsize=12, fontweight="bold", pad=10)
+    ax.set_title(lang_data["chart_mood_time"], fontsize=12, fontweight="bold", pad=10)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.grid(axis="y", alpha=0.3)
@@ -64,7 +64,7 @@ def _make_mood_time_chart(mood_by_date: list[dict]) -> io.BytesIO:
     return buf
 
 
-def _make_mood_distribution_chart(mood_distribution: list[dict]) -> io.BytesIO:
+def _make_mood_distribution_chart(mood_distribution: list[dict], lang_data: dict) -> io.BytesIO:
     """Bar chart: mood level distribution (0-6)."""
     if not mood_distribution:
         return None
@@ -83,8 +83,8 @@ def _make_mood_distribution_chart(mood_distribution: list[dict]) -> io.BytesIO:
 
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels([f"{d['mood']}" for d in mood_distribution], fontsize=9)
-    ax.set_ylabel("Count", fontsize=10)
-    ax.set_title("Mood Distribution", fontsize=12, fontweight="bold", pad=10)
+    ax.set_ylabel(lang_data["chart_y_count"], fontsize=10)
+    ax.set_title(lang_data["chart_mood_dist"], fontsize=12, fontweight="bold", pad=10)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.grid(axis="y", alpha=0.3)
@@ -97,7 +97,7 @@ def _make_mood_distribution_chart(mood_distribution: list[dict]) -> io.BytesIO:
     return buf
 
 
-def _make_day_of_week_chart(day_of_week_mood: list[dict]) -> io.BytesIO:
+def _make_day_of_week_chart(day_of_week_mood: list[dict], lang_data: dict) -> io.BytesIO:
     """Bar chart: average mood by day of week."""
     if not day_of_week_mood:
         return None
@@ -115,10 +115,10 @@ def _make_day_of_week_chart(day_of_week_mood: list[dict]) -> io.BytesIO:
 
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, fontsize=9)
-    ax.set_ylabel("Avg Mood", fontsize=10)
+    ax.set_ylabel(lang_data["chart_y_avg"], fontsize=10)
     ax.set_ylim(0, 7)
     ax.yaxis.set_major_locator(mticker.MultipleLocator(1))
-    ax.set_title("Mood by Day of Week", fontsize=12, fontweight="bold", pad=10)
+    ax.set_title(lang_data["chart_day_of_week"], fontsize=12, fontweight="bold", pad=10)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.grid(axis="y", alpha=0.3)
@@ -131,7 +131,7 @@ def _make_day_of_week_chart(day_of_week_mood: list[dict]) -> io.BytesIO:
     return buf
 
 
-def _make_tag_chart(tag_mood_correlation: list[dict]) -> io.BytesIO:
+def _make_tag_chart(tag_mood_correlation: list[dict], lang_data: dict) -> io.BytesIO:
     """Horizontal bar chart: average mood per tag."""
     if not tag_mood_correlation:
         return None
@@ -153,10 +153,10 @@ def _make_tag_chart(tag_mood_correlation: list[dict]) -> io.BytesIO:
 
     ax.set_yticks(y_pos)
     ax.set_yticklabels(labels, fontsize=9)
-    ax.set_xlabel("Avg Mood", fontsize=10)
+    ax.set_xlabel(lang_data["chart_y_avg"], fontsize=10)
     ax.set_xlim(0, 7.5)
     ax.xaxis.set_major_locator(mticker.MultipleLocator(1))
-    ax.set_title("Mood by Tag", fontsize=12, fontweight="bold", pad=10)
+    ax.set_title(lang_data["chart_mood_tag"], fontsize=12, fontweight="bold", pad=10)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.grid(axis="x", alpha=0.3)
@@ -170,7 +170,7 @@ def _make_tag_chart(tag_mood_correlation: list[dict]) -> io.BytesIO:
     return buf
 
 
-def _make_custom_scale_chart(scale_name: str, data: list[dict]) -> io.BytesIO:
+def _make_custom_scale_chart(scale_name: str, data: list[dict], lang_data: dict) -> io.BytesIO:
     """Bar chart: custom scale over time with value labels."""
     if not data:
         return None
@@ -188,7 +188,7 @@ def _make_custom_scale_chart(scale_name: str, data: list[dict]) -> io.BytesIO:
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
     ax.set_ylabel(scale_name, fontsize=10)
-    ax.set_title(f"Custom Scale: {scale_name}", fontsize=12, fontweight="bold", pad=10)
+    ax.set_title(f"{lang_data['chart_custom_scale']}: {scale_name}", fontsize=12, fontweight="bold", pad=10)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.grid(axis="y", alpha=0.3)
@@ -232,7 +232,7 @@ def build_stats_pdf(username: str, stats_data: dict) -> bytes | None:
 
     # Title
     pdf.set_font("DejaVuSans", "B", 20)
-    pdf.cell(0, 12, _clean_pdf_text(f"{lang_data['title']} — Statistics"), align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 12, _clean_pdf_text(f"{lang_data['title']} — {lang_data['stats_suffix']}"), align="C", new_x="LMARGIN", new_y="NEXT")
 
     # Subtitle
     pdf.set_font("DejaVuSans", "", 10)
@@ -242,14 +242,14 @@ def build_stats_pdf(username: str, stats_data: dict) -> bytes | None:
 
     # Summary cards
     pdf.set_font("DejaVuSans", "B", 12)
-    pdf.cell(0, 8, "Summary", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, lang_data["summary"], new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("DejaVuSans", "", 10)
 
     summary_items = [
-        ("Total Entries", str(stats_data.get("total_entries", 0))),
-        ("Average Mood", f"{stats_data.get('avg_mood', 0)}/6"),
-        ("Current Streak", f"{stats_data.get('current_streak', 0)} days"),
-        ("Longest Streak", f"{stats_data.get('longest_streak', 0)} days"),
+        (lang_data["total_entries"], str(stats_data.get("total_entries", 0))),
+        (lang_data["avg_mood"], f"{stats_data.get('avg_mood', 0)}/6"),
+        (lang_data["current_streak"], f"{stats_data.get('current_streak', 0)} {lang_data['days']}"),
+        (lang_data["longest_streak"], f"{stats_data.get('longest_streak', 0)} {lang_data['days']}"),
     ]
 
     col_width = pdf.epw / 2
@@ -268,30 +268,30 @@ def build_stats_pdf(username: str, stats_data: dict) -> bytes | None:
     charts_to_add = []
 
     # Mood over time
-    mood_chart = _make_mood_time_chart(stats_data.get("mood_by_date", []))
+    mood_chart = _make_mood_time_chart(stats_data.get("mood_by_date", []), lang_data)
     if mood_chart:
-        charts_to_add.append(("Mood Over Time", mood_chart))
+        charts_to_add.append((lang_data["chart_mood_time"], mood_chart))
 
     # Day of week
-    dow_chart = _make_day_of_week_chart(stats_data.get("day_of_week_mood", []))
+    dow_chart = _make_day_of_week_chart(stats_data.get("day_of_week_mood", []), lang_data)
     if dow_chart:
-        charts_to_add.append(("Mood by Day of Week", dow_chart))
+        charts_to_add.append((lang_data["chart_day_of_week"], dow_chart))
 
     # Mood distribution
-    dist_chart = _make_mood_distribution_chart(stats_data.get("mood_distribution", []))
+    dist_chart = _make_mood_distribution_chart(stats_data.get("mood_distribution", []), lang_data)
     if dist_chart:
-        charts_to_add.append(("Mood Distribution", dist_chart))
+        charts_to_add.append((lang_data["chart_mood_dist"], dist_chart))
 
     # Tag correlation
-    tag_chart = _make_tag_chart(stats_data.get("tag_mood_correlation", []))
+    tag_chart = _make_tag_chart(stats_data.get("tag_mood_correlation", []), lang_data)
     if tag_chart:
-        charts_to_add.append(("Mood by Tag", tag_chart))
+        charts_to_add.append((lang_data["chart_mood_tag"], tag_chart))
 
     # Custom scales
     for scale_name, scale_data in stats_data.get("scales_by_date", {}).items():
-        scale_chart = _make_custom_scale_chart(scale_name, scale_data)
+        scale_chart = _make_custom_scale_chart(scale_name, scale_data, lang_data)
         if scale_chart:
-            charts_to_add.append((f"Custom Scale: {scale_name}", scale_chart))
+            charts_to_add.append((f"{lang_data['chart_custom_scale']}: {scale_name}", scale_chart))
 
     # Add charts to PDF (2 per page after the first page which has summary)
     for i, (title, chart_buf) in enumerate(charts_to_add):
@@ -305,6 +305,6 @@ def build_stats_pdf(username: str, stats_data: dict) -> bytes | None:
 
     if not charts_to_add:
         pdf.set_font("DejaVuSans", "", 10)
-        pdf.cell(0, 10, "No chart data available.", align="C")
+        pdf.cell(0, 10, lang_data["no_chart_data"], align="C")
 
     return bytes(pdf.output(dest="S"))
