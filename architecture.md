@@ -11,11 +11,11 @@
 | Metadata index | SQLite (`data/index.db`) | Fast lookups for stats/search/calendar without decrypting every entry |
 | Auth storage | JSON file (`data/users.json`) | Single file, easy to back up, fields are hashed/encrypted |
 | Encryption | `cryptography` library (AES-GCM, PBKDF2) | Industry standard, audited |
-| PDF generation | fpdf2 + DejaVuSans | Unicode font supports emoji/accents/CJK, auto-detects user language |
+| PDF generation | fpdf2 + matplotlib + DejaVuSans | fpdf2 for text PDFs, matplotlib for chart images in stats PDFs. Unicode font supports emoji/accents/CJK. All PDFs fully localized via `PDF_LANG` dict |
 | Archive | Python `tarfile` + `zipfile` | Standard library |
 | Sessions | In-memory dict (server-side, 24h TTL) | Session ID via HTTP-only cookie, UEK never touches frontend |
 | i18n | JSON locale files | `en.json` + `pt-BR.json` loaded by React context |
-| Testing | pytest (103 tests) | Covers crypto, entry CRUD, utils, export/import, index |
+| Testing | pytest (121 tests) | Covers crypto, entry CRUD, utils, export/import, index, stats PDF, freewrite PDF |
 | Deployment | Docker multi-stage | Builds React static files, serves via uvicorn |
 
 ## Project Structure
@@ -28,15 +28,17 @@ DailyMoodJournal/
 │   │   ├── auth.py          # Login, signup, password reset, /me, change password, lazy index rebuild
 │   │   ├── entries.py       # CRUD /entries, /day/{date}, /tags, path traversal protection (uses index)
 │   │   ├── search.py        # /search?tags=&from_date=&to_date= (uses index for filtering)
-│   │   ├── stats.py         # /stats (uses index for filtering, decrypts only for scales)
+│   │   ├── stats.py         # /stats + /stats/pdf (uses index for filtering, decrypts only for scales)
 │   │   ├── settings.py      # /settings (uses FastAPI Depends() for auth)
-│   │   ├── freewrite.py     # /freewrite — session-based CRUD
+│   │   ├── freewrite.py     # /freewrite CRUD + /freewrite/export/pdf
 │   │   └── export.py        # /export (archive), /export/pdf (PDF), /export/import
 │   ├── crypto.py            # AES-256-GCM, PBKDF2 600K, key wrap/unwrap
 │   ├── entry_crud.py        # CRUD on encrypted .enc files, auto-updates index on write
 │   ├── index.py             # SQLite metadata index (WAL mode, auto-rebuildable)
 │   ├── deps.py              # FastAPI dependencies (get_current_session via Depends())
-│   ├── export_import.py     # Build archives, PDF export (fpdf2), process imports
+│   ├── export_import.py     # Build archives, PDF export (fpdf2), process imports, PDF_LANG dict
+│   ├── stats_pdf.py         # Stats PDF with matplotlib charts (mood time, distribution, day-of-week, tag, custom scales)
+│   ├── freewrite_pdf.py     # Free Write PDF export (fpdf2, multi-session, fully localized)
 │   ├── utils.py             # Path builders, YAML frontmatter (via PyYAML)
 │   ├── config.py            # Paths, user I/O, settings migration, mood maps, per-language tags
 │   └── prompts/
@@ -54,10 +56,10 @@ DailyMoodJournal/
 │   │   │   ├── EntryCard.jsx # Read-only entry with edit/delete (uses ConstantsContext)
 │   │   │   ├── MoodSlider.jsx # Emoji mood selector (uses ConstantsContext)
 │   │   │   ├── Search.jsx   # Tag + date range filter
-│   │   │   ├── Stats.jsx    # recharts bar charts (uses ConstantsContext)
+│   │   │   ├── Stats.jsx    # recharts bar charts + PDF download button (uses ConstantsContext)
 │   │   │   ├── Settings.jsx # Theme, language, tags, scales, export/import, password
 │   │   │   ├── HowToUse.jsx # How-to guide
-│   │   │   ├── FreeWrite.jsx # Notebook layout with auto-save
+│   │   │   ├── FreeWrite.jsx # Notebook layout with auto-save + PDF export (single/multi-select)
 │   │   │   ├── AboutCBT.jsx # CBT education
 │   │   │   └── ErrorBoundary.jsx # Catches render crashes, shows recovery UI
 │   │   ├── contexts/
@@ -73,13 +75,15 @@ DailyMoodJournal/
 │   ├── vite.config.js       # Dev proxy /api → localhost:8501
 │   ├── tailwind.config.js   # Custom mood color palette
 │   └── postcss.config.js
-├── tests/                   # pytest test suite (103 tests)
+├── tests/                   # pytest test suite (121 tests)
 │   ├── conftest.py          # Fixtures: isolated data dir, user_key, sample entry
 │   ├── test_crypto.py       # Encryption roundtrips, key wrapping, password hashing
 │   ├── test_entry_crud.py   # CRUD operations, user isolation
 │   ├── test_utils.py        # Path building, YAML parsing, validation
 │   ├── test_export_import.py # Export/import roundtrip, PDF generation
-│   └── test_index.py        # SQLite index operations, CRUD integration
+│   ├── test_index.py        # SQLite index operations, CRUD integration
+│   ├── test_stats_pdf.py    # Stats PDF chart generation + full PDF build
+│   └── test_freewrite_pdf.py # Free Write PDF generation
 ├── entries/                 # Created at runtime — encrypted .enc files
 ├── data/
 │   ├── users.json           # User credentials + settings (0o600)
@@ -121,10 +125,12 @@ DailyMoodJournal/
 | DELETE | `/api/entries/{path}` | Delete entry (auto-updates index) |
 | GET | `/api/search?tags=&from_date=&to_date=` | Search entries (uses index for filtering) |
 | GET | `/api/stats?period=day\|week\|month&from_date=&to_date=&tags=` | Stats (uses index for filtering, decrypts only for scales) |
+| GET | `/api/stats/pdf?period=day\|week\|month&from_date=&to_date=&tags=` | Stats PDF with matplotlib charts. Fully localized. Uses fetch+blob download on frontend |
 | GET | `/api/settings` | Get user preferences |
 | PUT | `/api/settings` | Update user preferences (uses FastAPI Depends()) |
 | GET | `/api/freewrite` | List all free write sessions |
 | POST | `/api/freewrite` | Create a new free write session |
+| GET | `/api/freewrite/export/pdf?ids=id1,id2` | Export free write sessions as PDF. Omit `ids` for all. Fully localized |
 | GET | `/api/freewrite/{id}` | Get full session content |
 | PUT | `/api/freewrite/{id}` | Update session title and content |
 | DELETE | `/api/freewrite/{id}` | Delete a free write session |
@@ -132,6 +138,37 @@ DailyMoodJournal/
 | GET | `/api/export/pdf?from_date=&to_date=` | Download PDF with optional date range |
 | POST | `/api/export/import` | Upload archive or .md/.txt files |
 | GET | `/{full_path:path}` | SPA catch-all — serves index.html |
+
+## PDF Export System
+
+The app has three kinds of PDF export, all fully localized based on the user's language setting:
+
+### 1. Entry PDF (`/api/export/pdf`)
+Generated by `export_import.py`. Uses fpdf2 with DejaVuSans. Each entry gets a mood-colored header, date, mood label, tags, scales, and body text. Supports optional date range filtering.
+
+### 2. Stats PDF (`/api/stats/pdf`)
+Generated by `stats_pdf.py`. Uses **matplotlib** to render charts as PNG images (with value labels on bars), then embeds them in an fpdf2 PDF. Charts:
+- Mood Over Time (bar chart, period-grouped)
+- Mood by Day of Week (bar chart)
+- Mood Distribution (bar chart, 0-6)
+- Mood by Tag (horizontal bar chart)
+- Custom Scales (bar chart per scale)
+
+The stats endpoint reuses `get_stats()` for data, passes it to `build_stats_pdf()`.
+
+### 3. Free Write PDF (`/api/freewrite/export/pdf`)
+Generated by `freewrite_pdf.py`. Exports selected or all free write sessions. Each session gets a cyan header bar, timestamp, and formatted content. Multi-page when exporting multiple sessions.
+
+### Frontend PDF Downloads
+Both Stats and FreeWrite use a `fetch` + blob + programmatic `<a>` click pattern for reliable downloads. The `window.open` approach was unreliable — browsers don't always trigger attachment downloads from new tabs.
+
+### Localization (`PDF_LANG` dict)
+All PDF text is localized via the `PDF_LANG` dict in `export_import.py`. Keys cover:
+- General: title, user, exported, entries, mood, tags, labels
+- Stats: summary, total_entries, avg_mood, streaks, chart titles, axis labels
+- Free Write: suffix, untitled, last_updated
+
+Currently supports `en` and `pt-BR`. The user's language is read from their settings via `get_user_settings()`.
 
 ## SQLite Metadata Index
 
@@ -217,10 +254,6 @@ Body text here...
 
 Exported `.md` files are plaintext YAML frontmatter + Markdown body. They carry `dailymood_version` so re-importing preserves the originating schema version. Timestamp collisions on re-import are automatically deconflicted by minute offsets (1–59). The import API returns per-file results: `{imported, skipped, files: [{filename, status, reason?}]}`.
 
-### PDF Export
-
-PDFs are generated with fpdf2 using DejaVuSans Unicode font. Characters above U+FFFF (emoji supplementary plane) are stripped gracefully. The PDF is fully localized based on the user's language setting.
-
 ### Encryption (Three-Key Hierarchy)
 
 ```
@@ -289,10 +322,11 @@ Mood colors, labels, and emojis are served from `/api/constants` (single source 
 - **i18n**: Locale files loaded via fetch, cached in memory, fallback to English if key missing. Locale and theme are synced from backend user settings on login.
 - **Theme**: Tailwind `class` strategy — `dark` class on `<html>` via `ThemeContext`. Fully server-authoritative (no localStorage).
 - **Date/time**: All timestamps use the browser's local timezone via `Date` getters.
-- **Stats**: Full analytics suite with date range filter, tag multi-select, and period grouping (daily/weekly/monthly). Uses SQLite index for fast filtering.
+- **Stats**: Full analytics suite with date range filter, tag multi-select, and period grouping (daily/weekly/monthly). Uses SQLite index for fast filtering. PDF download button in filter bar.
 - **Tags**: Stored per-language as a dict `{"en": [...], "pt-BR": [...]}` in user settings.
 - **Custom Scales**: Users can create numeric scales in Settings. Data stored per-entry in `scales` frontmatter field.
-- **Free Write**: Notebook layout with session list sidebar + editor. Auto-saves 800ms after typing stops.
+- **Free Write**: Notebook layout with session list sidebar + editor. Auto-saves 800ms after typing stops. PDF export with Select mode (checkboxes for multi-select) or Export All button. Individual PDF button on each session header.
+- **PDF Downloads**: Both Stats and FreeWrite use `fetch` + blob + programmatic `<a>` click. Credentials included for authenticated endpoints. Content-Disposition header parsed for filename.
 - **Brand color**: Cyan-500 (`#06b6d4`) is the primary accent.
 
 ## Deployment
@@ -339,6 +373,7 @@ fastapi>=0.110
 uvicorn>=0.29
 python-multipart>=0.0.9
 fpdf2>=2.7
+matplotlib>=3.8
 ```
 
 ### Dev (requirements-dev.txt)
