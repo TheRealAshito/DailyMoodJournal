@@ -137,12 +137,21 @@ export default function Stats() {
             className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600">
             {t('search')}
           </button>
-          <button onClick={() => {
-            let url = `/stats/pdf?period=${period}`
+          <button onClick={async () => {
+            let url = `/api/stats/pdf?period=${period}`
             if (fromDate) url += `&from_date=${fromDate}`
             if (toDate) url += `&to_date=${toDate}`
             if (selectedTags.length > 0) url += `&tags=${selectedTags.join(',')}`
-            window.open(url, '_blank')
+            try {
+              const resp = await fetch(url, { credentials: 'include' })
+              if (!resp.ok) { alert('Failed to generate PDF'); return }
+              const blob = await resp.blob()
+              const a = document.createElement('a')
+              a.href = URL.createObjectURL(blob)
+              a.download = resp.headers.get('content-disposition')?.match(/filename=(.+)/)?.[1] || 'stats.pdf'
+              a.click()
+              URL.revokeObjectURL(a.href)
+            } catch (e) { alert('Failed to download PDF') }
           }}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm font-medium hover:bg-gray-700">
             PDF

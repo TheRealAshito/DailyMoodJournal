@@ -246,5 +246,11 @@
   "fw_delete": "Deletar",
   "fw_saving": "Salvando...",
   "fw_word": "palavra",
-  "fw_words": "palavras"
+  "fw_words": "palavras",
+  "fw_select": "Selecionar",
+  "fw_cancel": "Cancelar",
+  "fw_select_all": "Todas",
+  "fw_deselect_all": "Nenhuma",
+  "fw_export_all": "Exportar Tudo",
+  "fw_export_pdf": "Exportar como PDF"
 }
