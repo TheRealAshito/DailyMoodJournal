@@ -111,6 +111,13 @@ def login(body: LoginRequest, response: Response):
     except Exception:
         pass
 
+    # Migrate plaintext freewrite files to encrypted
+    try:
+        from backend.routers.freewrite import migrate_freewrite
+        migrate_freewrite(body.username, user_key)
+    except Exception:
+        pass
+
     return {
         "username": body.username,
         "settings": get_user_settings(body.username),
