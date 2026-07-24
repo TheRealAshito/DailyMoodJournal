@@ -11,16 +11,18 @@ Built for homelab users who want a private, therapist-friendly journal that runs
 - **Multi-user** — each person has their own isolated, encrypted journal
 - **Encrypted at rest** — all entries are AES-256-GCM encrypted. Even if someone steals your disk, they can't read your journal
 - **Mood tracking** — rate your day from 0 (😞) to 6 (🤩) with a visual emoji slider
+- **Custom scales** — define your own numeric scales (e.g. Anxiety 0-10, Energy 1-5) and track them per entry
 - **Calendar heatmap** — month grid with mood-colored cells, date picker, per-day entry view
+- **Free Write** — notebook-style free-form writing with multiple sessions, auto-save, and word count
 - **Reflection prompts** — 64+ questions across 8 categories (self-reflection, gratitude, growth, emotions, relationships, goals, mindfulness, resilience). Configurable in Settings
 - **Cognitive Behavioral Therapy (CBT) education** — learn about 12 common cognitive distortions with examples
-- **Tag system** — filter entries by tag and date range
-- **Streaks & statistics** — current streak, longest streak, mood over time (recharts bar charts), mood distribution
+- **Tag system** — per-language tags, filter entries by tag and date range
+- **Streaks & statistics** — current streak, longest streak, mood over time, mood distribution, mood by day of week, mood by tag
 - **Search** — filter by tags and date range
 - **Export / Import** — export all entries as unencrypted `.md` files (`.tar.gz` or `.zip`), or import from archives or plain `.md`/`.txt` files
-- **PDF export** — compile all entries (or a date range) into a single PDF, no encryption, readable by anyone. Great for sharing with a therapist
-- **Dark / Light mode** — toggle in the top navigation bar
-- **i18n** — English and Brazilian Portuguese (PT-BR), switchable in the navbar
+- **PDF export** — three kinds: entry PDF (mood-colored headers), stats PDF (matplotlib charts), free write PDF (formatted sessions). All fully localized
+- **Dark / Light mode** — default dark mode, toggle in the top navigation bar
+- **i18n** — English and Brazilian Portuguese (PT-BR), switchable in Settings
 
 ---
 
@@ -37,10 +39,10 @@ Built for homelab users who want a private, therapist-friendly journal that runs
 │                  FastAPI Backend (Python)                    │
 │  · Auth (login, signup, password reset via security Q&A)    │
 │  · Entry CRUD (create, read, update, delete encrypted .enc) │
-│  · Stats (streaks, mood averages, distribution)             │
-│  · Search (tag + date range)                                │
+│  · Stats (streaks, mood averages, distribution, charts)     │
+│  · Search (tag + date range, via SQLite index)              │
 │  · Export/Import (tar.gz, zip, MD, TXT)                     │
-│  · PDF generation (fpdf2)                                   │
+│  · PDF generation (fpdf2 + matplotlib for charts)           │
 │  · Server-side sessions (UEK stays in RAM, never to client) │
 └──────────┬──────────────────────────────────────┬───────────┘
            │                                      │
@@ -49,7 +51,8 @@ Built for homelab users who want a private, therapist-friendly journal that runs
    │   entries/    │                     │      data/       │
    │  *.enc files  │                     │  users.json      │
    │  AES-256-GCM  │                     │  master.key      │
-   └──────────────┘                     └──────────────────┘
+   └──────────────┘                     │  index.db        │
+                                        └──────────────────┘
 ```
 
 ### Tech Stack
@@ -57,9 +60,10 @@ Built for homelab users who want a private, therapist-friendly journal that runs
 |-------|-----------|
 | **Frontend** | React 18 + Vite + Tailwind CSS |
 | **Backend** | Python 3.11+ · FastAPI · Uvicorn |
-| **Charts** | recharts |
+| **Charts** | recharts (web) · matplotlib (PDF) |
 | **Encryption** | cryptography (AES-256-GCM, PBKDF2 600K iterations) |
-| **PDF** | fpdf2 |
+| **Index** | SQLite (WAL mode, auto-rebuildable) |
+| **PDF** | fpdf2 + matplotlib |
 | **Deployment** | Docker (multi-stage: Node build → Python serve) |
 
 ### Encryption Model (Three-Key Hierarchy)
@@ -164,28 +168,34 @@ npm run dev
 ```
 DailyMoodJournal/
 ├── backend/                  # FastAPI Python backend
-│   ├── main.py              # App entry, CORS, static files
-│   ├── sessions.py          # In-memory session store
+│   ├── main.py              # App entry, CORS, security headers, static files
+│   ├── sessions.py          # In-memory session store (24h TTL)
 │   ├── routers/             # API route handlers
 │   ├── crypto.py            # AES-256-GCM, PBKDF2, key wrap
 │   ├── entry_crud.py        # CRUD on encrypted .enc files
-│   ├── export_import.py     # Archive/PDF export, import
+│   ├── index.py             # SQLite metadata index (WAL mode, auto-rebuildable)
+│   ├── deps.py              # FastAPI auth dependencies
+│   ├── export_import.py     # Archive/PDF export, import, PDF_LANG dict
+│   ├── stats_pdf.py         # Stats PDF with matplotlib charts
+│   ├── freewrite_pdf.py     # Free Write PDF export
 │   ├── config.py            # Paths, user I/O, settings
 │   ├── utils.py             # Path builders, YAML frontmatter
 │   └── prompts/             # CBT content (distortions + prompts)
 ├── frontend/                # React SPA (Vite + Tailwind)
 │   ├── src/components/      # UI pages and components
-│   ├── src/contexts/        # Auth, Theme, i18n
+│   ├── src/contexts/        # Auth, Theme, Constants
 │   ├── src/api.js           # Axios HTTP client
 │   ├── src/i18n.jsx         # Translation system
 │   └── public/locales/      # en.json + pt-BR.json
+├── tests/                   # pytest test suite (121 tests)
 ├── Dockerfile               # Multi-stage build
 ├── docker-compose.yml       # Single-service deployment
 ├── entries/                 # Created at runtime — encrypted journals
-├── data/                    # Created at runtime — users.json + master.key
+├── data/                    # Created at runtime — users.json + master.key + index.db
 ├── requirements.txt
 ├── goal.md                  # Product vision
-└── architecture.md          # Full architecture doc
+├── architecture.md          # Full architecture doc
+└── README.md                # This file
 ```
 
 ---
