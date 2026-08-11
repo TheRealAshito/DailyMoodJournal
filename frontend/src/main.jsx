@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ConstantsProvider } from './contexts/ConstantsContext'
+import { DateFormatProvider } from './contexts/DateFormatContext'
 import { I18nProvider } from './i18n'
 import App from './App'
 import './index.css'
@@ -14,9 +15,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <I18nProvider>
           <ConstantsProvider>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
+            <DateFormatProvider>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </DateFormatProvider>
           </ConstantsProvider>
         </I18nProvider>
       </ThemeProvider>

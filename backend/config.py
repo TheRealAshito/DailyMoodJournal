@@ -108,7 +108,9 @@ AUTH_KEYS = {
     "theme", "language", "reflection_categories", "cbt_enabled_categories",
 }
 
-KNOWN_SETTINGS = {"theme", "language", "reflection_categories", "tags", "custom_scales", "sticky_note"}
+KNOWN_SETTINGS = {"theme", "language", "reflection_categories", "tags", "custom_scales", "sticky_note", "date_format"}
+
+DATE_FORMAT_OPTIONS = ["YYYY-MM-DD", "DD-MM-YYYY", "MM-DD-YYYY"]
 
 
 def get_user_settings(username: str) -> dict:
@@ -117,6 +119,7 @@ def get_user_settings(username: str) -> dict:
     settings = {
         "theme": user.get("theme", "light"),
         "language": user.get("language", "en"),
+        "date_format": user.get("date_format", "YYYY-MM-DD"),
         "reflection_categories": user.get("reflection_categories",
             user.get("cbt_enabled_categories",
                 ["self_reflection", "gratitude", "growth_learning", "emotional_awareness"])),

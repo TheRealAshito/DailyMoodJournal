@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import api from '../api'
 import { useI18n } from '../i18n'
+import { useDateFormat, formatDateStr } from '../contexts/DateFormatContext'
 
 const SAVE_DELAY = 800
 
@@ -19,6 +20,7 @@ async function downloadPdf(url, filename) {
 
 export default function FreeWrite() {
   const { t } = useI18n()
+  const { dateFormat } = useDateFormat()
   const [sessions, setSessions] = useState([])
   const [activeId, setActiveId] = useState(null)
   const [title, setTitle] = useState('')
@@ -245,7 +247,12 @@ export default function FreeWrite() {
                       ? 'text-custom-muted'
                       : activeId === s.id ? 'text-white/70' : 'text-custom-muted'
                   }`}>
-                    {s.updated_at ? new Date(s.updated_at).toLocaleString() : ''}
+                    {s.updated_at ? (() => {
+                      const dt = new Date(s.updated_at)
+                      const datePart = formatDateStr(dt.toISOString(), dateFormat)
+                      const timePart = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+                      return `${datePart} ${timePart}`
+                    })() : ''}
                   </div>
                 </div>
                 {!selectMode && (

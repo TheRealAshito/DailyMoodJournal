@@ -65,12 +65,13 @@ def health():
 
 @app.get("/api/constants")
 def constants():
-    from backend.config import MOOD_COLORS, MOOD_LABELS, MOOD_EMOJIS, DEFAULT_TAGS
+    from backend.config import MOOD_COLORS, MOOD_LABELS, MOOD_EMOJIS, DEFAULT_TAGS, DATE_FORMAT_OPTIONS
     return {
         "mood_colors": MOOD_COLORS,
         "mood_labels": MOOD_LABELS,
         "mood_emojis": MOOD_EMOJIS,
         "default_tags": DEFAULT_TAGS,
+        "date_format_options": DATE_FORMAT_OPTIONS,
     }
 
 

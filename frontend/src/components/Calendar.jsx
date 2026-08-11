@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useI18n } from '../i18n'
 import { useConstants } from '../contexts/ConstantsContext'
+import { useDateFormat } from '../contexts/DateFormatContext'
 import EntryCard from './EntryCard'
 
 const DAY_KEYS = ['day_0','day_1','day_2','day_3','day_4','day_5','day_6']
@@ -33,6 +34,7 @@ function localDateStr(d) {
 export default function Calendar() {
   const { t } = useI18n()
   const { mood_colors: MOOD_COLORS } = useConstants()
+  const { formatDate } = useDateFormat()
   const navigate = useNavigate()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -177,7 +179,7 @@ export default function Calendar() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-custom">
             {t('entries_for')}
-            <span className="ml-2 text-custom-muted font-normal text-sm">{selectedDate}</span>
+            <span className="ml-2 text-custom-muted font-normal text-sm">{formatDate(selectedDate)}</span>
           </h3>
           <input
             type="date"

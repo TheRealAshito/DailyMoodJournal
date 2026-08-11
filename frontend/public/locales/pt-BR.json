@@ -224,6 +224,8 @@
   "howto_settings_title": "Configuracoes",
   "howto_settings_text": "Em Configuracoes voce pode alterar o tema, trocar o idioma, gerenciar categorias de reflexao, criar escalas personalizadas e tags, exportar ou importar dados e alterar sua senha."
 ,
+  "date_format": "Formato de Data",
+  "date_format_desc": "Escolha como as datas sao exibidas no app.",
   "period": "Periodo",
   "daily": "Diario",
   "weekly": "Semanal",

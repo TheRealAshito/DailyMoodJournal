@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useTheme } from './contexts/ThemeContext'
+import { useDateFormat } from './contexts/DateFormatContext'
 import { useI18n } from './i18n'
 import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
@@ -42,8 +43,9 @@ export default function App() {
   const { user, loading } = useAuth()
   const { changeLocale } = useI18n()
   const { setTheme } = useTheme()
+  const { setDateFormat } = useDateFormat()
 
-  // Sync locale and theme from backend settings whenever user state changes
+  // Sync locale, theme, and date format from backend settings whenever user state changes
   useEffect(() => {
     if (user?.settings?.language) {
       changeLocale(user.settings.language)
@@ -51,7 +53,10 @@ export default function App() {
     if (user?.settings?.theme) {
       setTheme(user.settings.theme)
     }
-  }, [user?.settings?.language, user?.settings?.theme])
+    if (user?.settings?.date_format) {
+      setDateFormat(user.settings.date_format)
+    }
+  }, [user?.settings?.language, user?.settings?.theme, user?.settings?.date_format])
 
   if (loading) {
     return (

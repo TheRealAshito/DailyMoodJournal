@@ -2,10 +2,12 @@ import { useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useI18n } from '../i18n'
 import { useConstants } from '../contexts/ConstantsContext'
+import { useDateFormat } from '../contexts/DateFormatContext'
 
 export default function EntryCard({ entry }) {
   const { t } = useI18n()
   const { mood_colors: MOOD_COLORS } = useConstants()
+  const { formatDate } = useDateFormat()
   const navigate = useNavigate()
   const mood = entry.mood ?? 3
 
@@ -24,7 +26,7 @@ export default function EntryCard({ entry }) {
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex-1">
           <h4 className="font-semibold">{entry.title}</h4>
-          <p className="text-xs text-custom-muted">{entry.date}</p>
+          <p className="text-xs text-custom-muted">{formatDate(entry.date)}</p>
         </div>
         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium text-white" style={{ backgroundColor: MOOD_COLORS[mood] }}>
           {t(`mood_${mood}`)} ({mood})

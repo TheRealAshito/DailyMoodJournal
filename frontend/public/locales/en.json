@@ -224,6 +224,8 @@
   "howto_settings_title": "Settings",
   "howto_settings_text": "In Settings you can change your theme, switch language, manage reflection prompt categories, create custom scales and tags, export or import data, and change your password."
 ,
+  "date_format": "Date Format",
+  "date_format_desc": "Choose how dates are displayed throughout the app.",
   "period": "Period",
   "daily": "Daily",
   "weekly": "Weekly",

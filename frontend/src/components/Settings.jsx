@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import api from '../api'
 import { useI18n } from '../i18n'
 import { useTheme } from '../contexts/ThemeContext'
+import { useDateFormat } from '../contexts/DateFormatContext'
 
 const CATEGORIES = [
   { key: 'self_reflection' },
@@ -17,6 +18,7 @@ const CATEGORIES = [
 export default function Settings() {
   const { t, changeLocale } = useI18n()
   const { theme, setTheme } = useTheme()
+  const { dateFormat, setDateFormat } = useDateFormat()
 
   async function extractBlobError(err) {
     if (err.response?.data instanceof Blob) {
@@ -198,6 +200,25 @@ export default function Settings() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium ${settings.language === lang ? 'bg-cyan-500 text-white' : 'border-custom bg-custom-secondary text-custom'}`}
               >
                 {lang === 'en' ? 'English' : 'Português'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="card-bg border border-custom rounded-xl p-5">
+          <h3 className="font-semibold mb-3">{t('date_format')}</h3>
+          <p className="text-sm text-custom-muted mb-3">{t('date_format_desc')}</p>
+          <div className="flex gap-2 flex-wrap">
+            {['YYYY-MM-DD', 'DD-MM-YYYY', 'MM-DD-YYYY'].map((fmt) => (
+              <button
+                key={fmt}
+                onClick={() => {
+                  setDateFormat(fmt)
+                  api.put('/settings', { date_format: fmt }).catch(() => {})
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${dateFormat === fmt ? 'bg-cyan-500 text-white' : 'border-custom bg-custom-secondary text-custom'}`}
+              >
+                {fmt}
               </button>
             ))}
           </div>

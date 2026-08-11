@@ -12,6 +12,7 @@ class SettingsUpdate(BaseModel):
     reflection_categories: list[str] | None = None
     tags: dict | None = None
     custom_scales: list | None = None
+    date_format: str | None = None
 
 
 @router.get("")
@@ -32,6 +33,8 @@ def update_settings(body: SettingsUpdate, session: dict = Depends(get_current_se
         updates["tags"] = body.tags
     if body.custom_scales is not None:
         updates["custom_scales"] = body.custom_scales
+    if body.date_format is not None:
+        updates["date_format"] = body.date_format
 
     save_user_settings(session["username"], updates)
     return get_user_settings(session["username"])
