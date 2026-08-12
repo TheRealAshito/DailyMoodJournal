@@ -18,6 +18,43 @@ export function formatDateStr(dateStr, format) {
   }
 }
 
+// Parse a date string in the given format back to YYYY-MM-DD
+export function parseDateStr(str, format) {
+  if (!str) return null
+  // Normalize separators: accept / or . as well as -
+  const cleaned = str.trim().replace(/[/.]/g, '-')
+  const parts = cleaned.split('-')
+  if (parts.length !== 3) return null
+
+  let y, m, d
+  switch (format) {
+    case 'DD-MM-YYYY':
+      [d, m, y] = parts
+      break
+    case 'MM-DD-YYYY':
+      [m, d, y] = parts
+      break
+    default: // YYYY-MM-DD
+      [y, m, d] = parts
+  }
+
+  // Validate
+  const yi = parseInt(y, 10)
+  const mi = parseInt(m, 10)
+  const di = parseInt(d, 10)
+  if (isNaN(yi) || isNaN(mi) || isNaN(di)) return null
+  if (yi < 1000 || yi > 9999) return null
+  if (mi < 1 || mi > 12) return null
+  if (di < 1 || di > 31) return null
+
+  return `${y.padStart(4, '0')}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+}
+
+// Get placeholder string for the format (e.g. "DD-MM-YYYY")
+export function getFormatPlaceholder(format) {
+  return format || DEFAULT_FORMAT
+}
+
 export function DateFormatProvider({ children }) {
   const [dateFormat, setDateFormat] = useState(DEFAULT_FORMAT)
 

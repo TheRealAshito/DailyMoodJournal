@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../api'
 import { useI18n } from '../i18n'
 import MoodSlider from './MoodSlider'
+import FormattedDateInput from './FormattedDateInput'
 
 const PROMPT_CATEGORIES = {
   self_reflection: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -151,7 +152,7 @@ export default function EntryForm() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">{t('date')}</label>
-            <input type="date" value={edate} onChange={(e) => setEdate(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+            <FormattedDateInput value={edate} onChange={setEdate} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">{t('time')}</label>

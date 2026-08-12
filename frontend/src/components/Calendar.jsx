@@ -5,6 +5,7 @@ import { useI18n } from '../i18n'
 import { useConstants } from '../contexts/ConstantsContext'
 import { useDateFormat } from '../contexts/DateFormatContext'
 import EntryCard from './EntryCard'
+import FormattedDateInput from './FormattedDateInput'
 
 const DAY_KEYS = ['day_0','day_1','day_2','day_3','day_4','day_5','day_6']
 
@@ -181,10 +182,9 @@ export default function Calendar() {
             {t('entries_for')}
             <span className="ml-2 text-custom-muted font-normal text-sm">{formatDate(selectedDate)}</span>
           </h3>
-          <input
-            type="date"
+          <FormattedDateInput
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(iso) => setSelectedDate(iso)}
             className="px-3 py-1.5 rounded-xl border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
           />
         </div>

@@ -112,6 +112,13 @@ KNOWN_SETTINGS = {"theme", "language", "reflection_categories", "tags", "custom_
 
 DATE_FORMAT_OPTIONS = ["YYYY-MM-DD", "DD-MM-YYYY", "MM-DD-YYYY"]
 
+# Map user-facing date format to strftime patterns for PDF exports
+DATE_FORMAT_STRFTIME = {
+    "YYYY-MM-DD": "%Y-%m-%d",
+    "DD-MM-YYYY": "%d-%m-%Y",
+    "MM-DD-YYYY": "%m-%d-%Y",
+}
+
 
 def get_user_settings(username: str) -> dict:
     users = load_users()

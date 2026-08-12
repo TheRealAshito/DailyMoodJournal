@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../api'
 import { useI18n } from '../i18n'
 import EntryCard from './EntryCard'
+import FormattedDateInput from './FormattedDateInput'
 
 export default function Search() {
   const { t } = useI18n()
@@ -53,11 +54,11 @@ export default function Search() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">{t('date_range')} — from</label>
-            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom" />
+            <FormattedDateInput value={fromDate} onChange={setFromDate} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">{t('date_range')} — to</label>
-            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom" />
+            <FormattedDateInput value={toDate} onChange={setToDate} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom" />
           </div>
         </div>
 

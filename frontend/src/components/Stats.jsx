@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Cartes
 import api from '../api'
 import { useI18n } from '../i18n'
 import { useConstants } from '../contexts/ConstantsContext'
+import FormattedDateInput from './FormattedDateInput'
 
 const DAY_KEYS = ['day_0','day_1','day_2','day_3','day_4','day_5','day_6']
 
@@ -83,12 +84,12 @@ export default function Stats() {
           <div className="flex flex-wrap items-end gap-4 mb-6">
             <div>
               <label className="block text-xs text-custom-muted mb-1">{t('date_range')} — from</label>
-              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+              <FormattedDateInput value={fromDate} onChange={setFromDate}
                 className="px-3 py-2 rounded-lg border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
             </div>
             <div>
               <label className="block text-xs text-custom-muted mb-1">{t('date_range')} — to</label>
-              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
+              <FormattedDateInput value={toDate} onChange={setToDate}
                 className="px-3 py-2 rounded-lg border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
             </div>
             <button onClick={fetchStats}
@@ -112,12 +113,12 @@ export default function Stats() {
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <label className="block text-xs text-custom-muted mb-1">{t('date_range')} — {t('date')} from</label>
-            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+            <FormattedDateInput value={fromDate} onChange={setFromDate}
               className="px-3 py-2 rounded-lg border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
           </div>
           <div>
             <label className="block text-xs text-custom-muted mb-1">{t('date_range')} — to</label>
-            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
+            <FormattedDateInput value={toDate} onChange={setToDate}
               className="px-3 py-2 rounded-lg border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
           </div>
           <div>

@@ -6,7 +6,7 @@ from datetime import datetime
 from backend.crypto import encrypt_entry
 from backend.entry_crud import get_entry
 from backend.utils import list_user_entries, parse_entry_text, build_entry_path, build_entry_text, validate_entry_data
-from backend.config import MOOD_LABELS, MOOD_COLORS as MOOD_COLORS_RGB, DATA_VERSION, get_user_settings
+from backend.config import MOOD_LABELS, MOOD_COLORS as MOOD_COLORS_RGB, DATA_VERSION, get_user_settings, DATE_FORMAT_STRFTIME
 
 from fpdf import FPDF
 
@@ -106,9 +106,18 @@ PDF_LANG = {
 }
 
 
-def _fmt_date(dt: datetime, lang: str) -> str:
+def _fmt_date(dt: datetime, lang: str, date_format: str = None) -> str:
+    if date_format and date_format in DATE_FORMAT_STRFTIME:
+        return dt.strftime(DATE_FORMAT_STRFTIME[date_format] + " %H:%M")
     fmt = PDF_LANG.get(lang, PDF_LANG["en"])["date_fmt"]
     return dt.strftime(fmt)
+
+
+def _fmt_date_only(date_format: str = None) -> str:
+    """Format today's date for the 'exported on' line."""
+    if date_format and date_format in DATE_FORMAT_STRFTIME:
+        return datetime.now().strftime(DATE_FORMAT_STRFTIME[date_format])
+    return datetime.now().strftime('%d/%m/%Y')
 
 
 def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=None) -> bytes | None:
@@ -121,6 +130,7 @@ def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=Non
     # Get user's language setting
     settings = get_user_settings(username)
     lang = settings.get("language", "en")
+    date_format = settings.get("date_format")
     lang_data = PDF_LANG.get(lang, PDF_LANG["en"])
     mood_labels = lang_data["labels"]
 
@@ -156,7 +166,7 @@ def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=Non
     pdf.cell(0, 12, lang_data["title"], align="C", ln=True)
     pdf.set_font("DejaVuSans", "", 10)
     pdf.cell(0, 7, f"{lang_data['user']}: {username}", align="C", ln=True)
-    pdf.cell(0, 7, f"{lang_data['exported']}: {datetime.now().strftime('%d/%m/%Y')}", align="C", ln=True)
+    pdf.cell(0, 7, f"{lang_data['exported']}: {_fmt_date_only(date_format)}", align="C", ln=True)
     pdf.cell(0, 7, f"{lang_data['entries']}: {len(decoded)}", align="C", ln=True)
     pdf.ln(8)
 
@@ -179,7 +189,7 @@ def build_pdf_export(username: str, user_key: bytes, date_from=None, date_to=Non
         entry_date = entry.get("date", "")
         try:
             dt_obj = dt_parse.strptime(entry_date, "%Y-%m-%d %H:%M")
-            entry_date = _fmt_date(dt_obj, lang)
+            entry_date = _fmt_date(dt_obj, lang, date_format)
         except (ValueError, TypeError):
             pass
         pdf.cell(0, 6, f"  {entry_date}  |  {lang_data['mood']}: {label} ({mood})", ln=True)

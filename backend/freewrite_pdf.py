@@ -5,8 +5,8 @@ import logging
 from datetime import datetime
 
 from fpdf import FPDF
-from backend.export_import import FONT_PATH, _clean_pdf_text, PDF_LANG
-from backend.config import get_user_settings
+from backend.export_import import FONT_PATH, _clean_pdf_text, PDF_LANG, _fmt_date_only
+from backend.config import get_user_settings, DATE_FORMAT_STRFTIME
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ def build_freewrite_pdf(username: str, sessions: list[dict]) -> bytes | None:
 
     settings = get_user_settings(username)
     lang = settings.get("language", "en")
+    date_format = settings.get("date_format")
     lang_data = PDF_LANG.get(lang, PDF_LANG["en"])
 
     pdf = _init_freewrite_pdf()
@@ -44,7 +45,7 @@ def build_freewrite_pdf(username: str, sessions: list[dict]) -> bytes | None:
     pdf.cell(0, 12, _clean_pdf_text(f"{lang_data['title']} — {lang_data['fw_suffix']}"), align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("DejaVuSans", "", 10)
     pdf.cell(0, 7, f"{lang_data['user']}: {username}", align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 7, f"{lang_data['exported']}: {datetime.now().strftime('%d/%m/%Y')}", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 7, f"{lang_data['exported']}: {_fmt_date_only(date_format)}", align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.cell(0, 7, f"{lang_data['entries']}: {len(sessions)}", align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(8)
 
@@ -68,7 +69,8 @@ def build_freewrite_pdf(username: str, sessions: list[dict]) -> bytes | None:
         if updated:
             try:
                 dt = datetime.fromisoformat(updated)
-                pdf.cell(0, 5, f"  {lang_data['fw_last_updated']}: {dt.strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT")
+                fmt_str = DATE_FORMAT_STRFTIME.get(date_format, "%d/%m/%Y")
+                pdf.cell(0, 5, f"  {lang_data['fw_last_updated']}: {dt.strftime(fmt_str + ' %H:%M')}", new_x="LMARGIN", new_y="NEXT")
             except (ValueError, TypeError):
                 pass
 

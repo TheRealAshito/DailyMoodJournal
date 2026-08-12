@@ -3,6 +3,7 @@ import api from '../api'
 import { useI18n } from '../i18n'
 import { useTheme } from '../contexts/ThemeContext'
 import { useDateFormat } from '../contexts/DateFormatContext'
+import FormattedDateInput from './FormattedDateInput'
 
 const CATEGORIES = [
   { key: 'self_reflection' },
@@ -357,11 +358,11 @@ export default function Settings() {
           <div className="flex gap-3 mb-3 items-end">
             <div>
               <label className="block text-xs text-custom-muted mb-1">{t('pdf_date_from')}</label>
-              <input type="date" value={pdfFrom} onChange={(e) => setPdfFrom(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+              <FormattedDateInput value={pdfFrom} onChange={setPdfFrom} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
             </div>
             <div>
               <label className="block text-xs text-custom-muted mb-1">{t('pdf_date_to')}</label>
-              <input type="date" value={pdfTo} onChange={(e) => setPdfTo(e.target.value)} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+              <FormattedDateInput value={pdfTo} onChange={setPdfTo} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
             </div>
             <div className="text-xs text-custom-muted pb-2">{t('pdf_all_entries')}</div>
           </div>

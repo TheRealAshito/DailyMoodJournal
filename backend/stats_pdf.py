@@ -17,7 +17,7 @@ import matplotlib.ticker as mticker
 
 from fpdf import FPDF
 from backend.config import MOOD_COLORS, MOOD_LABELS, get_user_settings
-from backend.export_import import FONT_PATH, _clean_pdf_text, PDF_LANG
+from backend.export_import import FONT_PATH, _clean_pdf_text, PDF_LANG, _fmt_date_only
 
 logger = logging.getLogger(__name__)
 
@@ -224,6 +224,7 @@ def build_stats_pdf(username: str, stats_data: dict) -> bytes | None:
 
     settings = get_user_settings(username)
     lang = settings.get("language", "en")
+    date_format = settings.get("date_format")
     lang_data = PDF_LANG.get(lang, PDF_LANG["en"])
 
     pdf = _init_stats_pdf()
@@ -237,7 +238,7 @@ def build_stats_pdf(username: str, stats_data: dict) -> bytes | None:
     # Subtitle
     pdf.set_font("DejaVuSans", "", 10)
     pdf.cell(0, 7, f"{lang_data['user']}: {username}", align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 7, f"{lang_data['exported']}: {datetime.now().strftime('%d/%m/%Y')}", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 7, f"{lang_data['exported']}: {_fmt_date_only(date_format)}", align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(8)
 
     # Summary cards
