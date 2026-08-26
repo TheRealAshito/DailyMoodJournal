@@ -30,6 +30,7 @@ export default function FreeWrite() {
   const [newTitle, setNewTitle] = useState('')
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [selectMode, setSelectMode] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const timer = useRef(null)
   const textareaRef = useRef(null)
 
@@ -132,6 +133,11 @@ export default function FreeWrite() {
     downloadPdf(`/api/freewrite/export/pdf${param}`, 'freewrite.pdf')
   }
 
+  function selectSession(id) {
+    setActiveId(id)
+    setSidebarOpen(false)
+  }
+
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
 
   if (!loaded) {
@@ -146,7 +152,19 @@ export default function FreeWrite() {
     <div className="flex flex-col h-[calc(100vh-7rem)]">
       {/* Header bar */}
       <div className="flex items-center justify-between mb-4 shrink-0">
-        <h1 className="text-xl font-bold">{t('free_write')}</h1>
+        <div className="flex items-center gap-2">
+          {/* Mobile: sessions toggle button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden p-1.5 rounded-lg text-custom hover-bg transition-colors"
+            aria-label="Sessions"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+            </svg>
+          </button>
+          <h1 className="text-xl font-bold">{t('free_write')}</h1>
+        </div>
         <div className="flex items-center gap-3 text-xs text-custom-muted">
           <span>{wordCount} {wordCount === 1 ? t('fw_word') : t('fw_words')}</span>
           {saving && <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" title={t('fw_saving')} />}
@@ -155,8 +173,8 @@ export default function FreeWrite() {
 
       {/* Notebook layout: sidebar + editor */}
       <div className="flex gap-4 flex-1 min-h-0">
-        {/* Sidebar — session list */}
-        <div className="w-56 shrink-0 flex flex-col gap-2">
+        {/* Sidebar — desktop only */}
+        <div className="hidden md:flex w-56 shrink-0 flex-col gap-2">
           {/* New session */}
           <div className="flex gap-1">
             <input
@@ -313,6 +331,86 @@ export default function FreeWrite() {
       <p className="text-xs text-custom-muted mt-3 text-center shrink-0">
         {t('fw_auto_save')}
       </p>
+
+      {/* Mobile session drawer overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setSidebarOpen(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="absolute top-14 left-0 w-72 max-w-[85vw] sidebar-bg border-r border-custom shadow-xl h-[calc(100vh-3.5rem)] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-3 space-y-2">
+              {/* New session */}
+              <div className="flex gap-1">
+                <input
+                  type="text"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleNew() } }}
+                  placeholder={t('fw_new_session')}
+                  className="flex-1 px-2 py-1.5 rounded-lg border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 min-w-0"
+                />
+                <button onClick={() => { handleNew(); setSidebarOpen(false) }} className="px-2.5 py-1.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 shrink-0">
+                  +
+                </button>
+              </div>
+
+              {/* Export controls */}
+              {sessions.length > 0 && (
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleExportPdf([])}
+                    className="flex-1 px-2 py-1.5 rounded-lg text-xs font-medium border border-custom text-custom hover:border-cyan-400"
+                  >
+                    {t('fw_export_all')}
+                  </button>
+                </div>
+              )}
+
+              {/* Session list */}
+              <div className="space-y-1">
+                {sessions.length === 0 && (
+                  <p className="text-xs text-custom-muted text-center pt-4">{t('fw_no_sessions')}</p>
+                )}
+                {sessions.map((s) => (
+                  <div
+                    key={s.id}
+                    onClick={() => selectSession(s.id)}
+                    className={`flex items-start gap-2 px-3 py-2.5 rounded-lg cursor-pointer text-sm transition-colors ${
+                      activeId === s.id
+                        ? 'bg-cyan-500 text-white'
+                        : 'text-custom hover-bg'
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-medium">{s.title}</div>
+                      <div className={`text-xs truncate ${
+                        activeId === s.id ? 'text-white/70' : 'text-custom-muted'
+                      }`}>
+                        {s.updated_at ? (() => {
+                          const dt = new Date(s.updated_at)
+                          const datePart = formatDateStr(dt.toISOString(), dateFormat)
+                          const timePart = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+                          return `${datePart} ${timePart}`
+                        })() : ''}
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(s.id) }}
+                      className={`shrink-0 text-sm leading-none px-1.5 py-0.5 rounded ${
+                        activeId === s.id ? 'hover:bg-white/20 text-white/70' : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-red-400'
+                      }`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

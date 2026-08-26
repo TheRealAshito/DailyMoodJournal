@@ -92,21 +92,25 @@ export default function Calendar() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Header — stacks on mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-custom">{t('journal')}</h1>
           <p className="text-sm text-custom-muted mt-0.5">{t('total_entries')}: {entries.length}</p>
         </div>
-        <button onClick={() => navigate('/new')} className="px-5 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-600 transition-all shadow-sm hover:shadow-md active:scale-95">
+        {/* Desktop: inline button. Mobile: hidden (FAB below) */}
+        <button
+          onClick={() => navigate('/new')}
+          className="hidden sm:inline-flex px-5 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-600 transition-all shadow-sm hover:shadow-md active:scale-95"
+        >
           + {t('new_entry')}
         </button>
       </div>
 
       {/* Calendar card */}
-      <div className="card-bg border border-custom rounded-2xl p-5 mb-6 shadow-sm">
+      <div className="card-bg border border-custom rounded-2xl p-3 sm:p-5 mb-6 shadow-sm">
         {/* Month navigator */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-4 sm:mb-5">
           <button onClick={prevMonth} className="w-9 h-9 flex items-center justify-center rounded-xl border border-custom bg-custom-secondary text-custom hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:border-cyan-300 transition-all">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
@@ -132,7 +136,7 @@ export default function Calendar() {
             </div>
 
             {/* Calendar grid */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
               {grid.flat().map((day, i) => {
                 if (day === null) return <div key={`empty-${i}`} />
 
@@ -148,7 +152,7 @@ export default function Calendar() {
                     onClick={() => setSelectedDate(dateKey)}
                     onDoubleClick={() => navigate(`/new?date=${dateKey}`)}
                     className={`
-                      relative flex flex-col items-center justify-center py-2 rounded-xl text-sm font-medium transition-all
+                      relative flex flex-col items-center justify-center py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all
                       ${isSelected ? 'ring-2 ring-cyan-400 bg-cyan-50 dark:bg-cyan-900/20' : color ? 'ring-2' : ''}
                       ${isToday && !isSelected ? 'ring-1 ring-cyan-300' : ''}
                       ${!isSelected && !isToday ? 'hover:bg-custom-secondary' : ''}
@@ -165,11 +169,11 @@ export default function Calendar() {
       </div>
 
       {/* Mood legend */}
-      <div className="flex flex-wrap items-center gap-3 mb-6 px-1">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6 px-1">
         <span className="text-xs font-medium text-custom-muted mr-1">{t('mood')}:</span>
         {Object.entries(MOOD_COLORS).map(([i, color]) => (
-          <span key={i} className="inline-flex items-center gap-1.5 text-xs text-custom-muted">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+          <span key={i} className="inline-flex items-center gap-1 text-xs text-custom-muted">
+            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: color }} />
             {i}
           </span>
         ))}
@@ -177,7 +181,8 @@ export default function Calendar() {
 
       {/* Selected day entries */}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-4">
+        {/* Stacks on mobile */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h3 className="text-lg font-semibold text-custom">
             {t('entries_for')}
             <span className="ml-2 text-custom-muted font-normal text-sm">{formatDate(selectedDate)}</span>
@@ -190,7 +195,7 @@ export default function Calendar() {
         </div>
 
         {dayEntries.length === 0 ? (
-          <div className="card-bg border border-custom rounded-2xl p-8 text-center">
+          <div className="card-bg border border-custom rounded-2xl p-6 sm:p-8 text-center">
             <p className="text-custom-muted text-sm mb-3">{t('no_entries')}</p>
             <button onClick={() => navigate('/new')} className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 transition-colors">{t('write_one')}</button>
           </div>
@@ -202,6 +207,17 @@ export default function Calendar() {
           </div>
         )}
       </div>
+
+      {/* Mobile FAB — fixed bottom-right */}
+      <button
+        onClick={() => navigate('/new')}
+        className="sm:hidden fixed bottom-6 right-6 w-14 h-14 bg-cyan-500 text-white rounded-full shadow-lg hover:bg-cyan-600 active:scale-95 transition-all flex items-center justify-center z-30"
+        aria-label={t('new_entry')}
+      >
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
     </div>
   )
 }
