@@ -226,6 +226,19 @@ export default function Settings() {
         </div>
 
         <div className="card-bg border border-custom rounded-xl p-5">
+          <h3 className="font-semibold mb-3">📌 {t('sticky_note')}</h3>
+          <p className="text-sm text-custom-muted mb-3">{t('sticky_note_desc')}</p>
+          <textarea
+            value={settings.sticky_note || ''}
+            onChange={(e) => setSettings({ ...settings, sticky_note: e.target.value })}
+            onBlur={() => api.put('/settings', { sticky_note: settings.sticky_note || '' }).catch(() => {})}
+            placeholder={t('sticky_note_placeholder')}
+            rows={3}
+            className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 resize-none"
+          />
+        </div>
+
+        <div className="card-bg border border-custom rounded-xl p-5">
           <h3 className="font-semibold mb-3">{t('reflection_categories')}</h3>
           <p className="text-sm text-custom-muted mb-3">Choose which prompt categories appear when you enable reflection prompts on an entry.</p>
           <div className="flex flex-wrap gap-2">

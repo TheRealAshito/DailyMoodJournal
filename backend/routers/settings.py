@@ -13,6 +13,7 @@ class SettingsUpdate(BaseModel):
     tags: dict | None = None
     custom_scales: list | None = None
     date_format: str | None = None
+    sticky_note: str | None = None
 
 
 @router.get("")
@@ -35,6 +36,8 @@ def update_settings(body: SettingsUpdate, session: dict = Depends(get_current_se
         updates["custom_scales"] = body.custom_scales
     if body.date_format is not None:
         updates["date_format"] = body.date_format
+    if body.sticky_note is not None:
+        updates["sticky_note"] = body.sticky_note
 
     save_user_settings(session["username"], updates)
     return get_user_settings(session["username"])

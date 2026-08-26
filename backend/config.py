@@ -127,6 +127,7 @@ def get_user_settings(username: str) -> dict:
         "theme": user.get("theme", "light"),
         "language": user.get("language", "en"),
         "date_format": user.get("date_format", "YYYY-MM-DD"),
+        "sticky_note": user.get("sticky_note", ""),
         "reflection_categories": user.get("reflection_categories",
             user.get("cbt_enabled_categories",
                 ["self_reflection", "gratitude", "growth_learning", "emotional_awareness"])),
