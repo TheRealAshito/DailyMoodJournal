@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../api'
 import { useI18n } from '../i18n'
@@ -50,34 +50,156 @@ export default function EntryForm() {
 
   const isEditing = !!encodedPath
 
+  // --- Draft autosave (persists unsaved form state, like FreeWrite) ---
+  const SAVE_DELAY = 2000
+  const draftKey = isEditing ? decodeURIComponent(encodedPath) : 'new'
+  const draftTimer = useRef(null)
+  const initialEntry = useRef(null)      // pristine entry state (for discard while editing)
+  const skipNextAutosave = useRef(false) // don't re-save right after restoring a draft
+  const [draftReady, setDraftReady] = useState(false)
+  const [draftStatus, setDraftStatus] = useState('') // '' | 'saving' | 'saved'
+  const [restoredAt, setRestoredAt] = useState(null) // updated_at of restored draft
+
+  // Always-fresh snapshot for flush-on-hide listeners
+  const latestPayload = useRef({})
+  latestPayload.current = {
+    title, body, mood, tags: selectedTags, scales: scaleValues,
+    date: edate, time: etime,
+    include_prompts: includePrompts, prompts, responses,
+  }
+  const draftReadyRef = useRef(false)
+  draftReadyRef.current = draftReady
+
   useEffect(() => {
     api.get('/settings')
       .then((r) => setSettings(r.data))
       .catch(() => {})
   }, [])
 
+  function applyForm(s) {
+    setTitle(s.title || '')
+    setBody(s.body || '')
+    setMood(s.mood ?? 3)
+    setSelectedTags(s.tags || [])
+    setScaleValues(s.scales || {})
+    if (s.date) setEdate(s.date)
+    if (s.time) setEtime(s.time)
+    setIncludePrompts(!!s.include_prompts)
+    setPrompts(s.prompts || [])
+    setResponses(s.responses || [])
+  }
+
+  function hasDraftContent(p) {
+    return Boolean(
+      (p.title || '').trim() || (p.body || '').trim() ||
+      (p.responses || []).some((r) => (r || '').trim()) ||
+      (p.tags || []).length > 0 || Object.keys(p.scales || {}).length > 0
+    )
+  }
+
   useEffect(() => {
-    if (!isEditing) return
-    const path = decodeURIComponent(encodedPath)
-    api.get(`/entries/${encodeURIComponent(path)}`)
-      .then((r) => {
-        const e = r.data
-        setTitle(e.title || '')
-        setMood(e.mood ?? 3)
-        setSelectedTags(e.tags || [])
-        setBody(e.body || '')
-        setScaleValues(e.scales || {})
+    let cancelled = false
+
+    async function load() {
+      if (isEditing) {
+        const path = decodeURIComponent(encodedPath)
         try {
-          const dt = new Date(e.date)
-          setEdate(localDateStr(dt))
-          setEtime(localTimeStr(dt))
+          const r = await api.get(`/entries/${encodeURIComponent(path)}`)
+          if (cancelled) return
+          const e = r.data
+          let date = e.date?.slice(0, 10) || localDateStr(new Date())
+          let time = e.date?.slice(11, 16) || localTimeStr(new Date())
+          try {
+            const dt = new Date(e.date)
+            date = localDateStr(dt)
+            time = localTimeStr(dt)
+          } catch {}
+          initialEntry.current = {
+            title: e.title || '', body: e.body || '', mood: e.mood ?? 3,
+            tags: e.tags || [], scales: e.scales || {}, date, time,
+            include_prompts: false, prompts: [], responses: [],
+          }
+          applyForm(initialEntry.current)
         } catch {
-          setEdate(e.date?.slice(0, 10) || localDateStr(new Date()))
+          if (!cancelled) { setError('Failed to load entry.'); setFetching(false) }
+          return
         }
-      })
-      .catch(() => setError('Failed to load entry.'))
-      .finally(() => setFetching(false))
+      }
+      // Restore an unsaved draft (new entry or this edit) if one exists
+      try {
+        const dr = await api.get(`/drafts/${encodeURIComponent(draftKey)}`)
+        if (cancelled) return
+        if (dr.data?.payload) {
+          skipNextAutosave.current = true
+          applyForm(dr.data.payload)
+          setRestoredAt(dr.data.updated_at || null)
+        }
+      } catch {}
+      if (!cancelled) {
+        setFetching(false)
+        setDraftReady(true)
+      }
+    }
+    load()
+    return () => { cancelled = true }
   }, [encodedPath, isEditing])
+
+  // Debounced draft autosave whenever the form changes
+  useEffect(() => {
+    if (!draftReady) return
+    if (skipNextAutosave.current) { skipNextAutosave.current = false; return }
+    const payload = latestPayload.current
+    if (!hasDraftContent(payload)) return
+    if (draftTimer.current) clearTimeout(draftTimer.current)
+    draftTimer.current = setTimeout(() => {
+      setDraftStatus('saving')
+      api.put(`/drafts/${encodeURIComponent(draftKey)}`, payload)
+        .then(() => setDraftStatus('saved'))
+        .catch(() => {})
+    }, SAVE_DELAY)
+    return () => clearTimeout(draftTimer.current)
+  }, [title, body, mood, selectedTags, scaleValues, edate, etime, includePrompts, prompts, responses, draftReady, draftKey])
+
+  // Flush the draft immediately when the page is hidden or closed
+  // (mobile app switches kill the page before the debounce fires)
+  useEffect(() => {
+    function flush() {
+      if (draftTimer.current) { clearTimeout(draftTimer.current); draftTimer.current = null }
+      const payload = latestPayload.current
+      if (!draftReadyRef.current || !hasDraftContent(payload)) return
+      setDraftStatus('saving')
+      // keepalive fetch survives page teardown on mobile app switches
+      // (a cancelled axios request would lose the last keystrokes)
+      fetch(`/api/drafts/${encodeURIComponent(draftKey)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        keepalive: true,
+        body: JSON.stringify(payload),
+      })
+        .then((r) => { if (r.ok) setDraftStatus('saved') })
+        .catch(() => {})
+    }
+    function onVisibility() { if (document.hidden) flush() }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pagehide', flush)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pagehide', flush)
+    }
+  }, [draftKey])
+
+  async function handleDiscardDraft() {
+    try { await api.delete(`/drafts/${encodeURIComponent(draftKey)}`) } catch {}
+    setRestoredAt(null)
+    setDraftStatus('')
+    skipNextAutosave.current = true
+    if (isEditing && initialEntry.current) {
+      applyForm(initialEntry.current)
+    } else {
+      applyForm({})
+    }
+  }
 
   function togglePrompts() {
     if (!includePrompts) {
@@ -125,6 +247,8 @@ export default function EntryForm() {
       } else {
         await api.post('/entries', payload)
       }
+      // Entry saved — the draft is no longer needed
+      try { await api.delete(`/drafts/${encodeURIComponent(draftKey)}`) } catch {}
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to save.')
@@ -142,6 +266,19 @@ export default function EntryForm() {
       <h1 className="text-xl font-bold mb-6">{isEditing ? t('edit') : t('new_entry')}</h1>
 
       {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 rounded-lg p-3 mb-4 text-sm">{error}</div>}
+
+      {restoredAt && (
+        <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-3 mb-4 text-sm flex items-center justify-between gap-3">
+          <span>{t('draft_restored')}{restoredAt.length > 10 ? ` (${restoredAt.slice(11, 16)})` : ''}</span>
+          <button
+            type="button"
+            onClick={handleDiscardDraft}
+            className="px-3 py-1.5 rounded-lg border-custom bg-custom-secondary text-custom text-xs font-medium hover-bg whitespace-nowrap"
+          >
+            {t('draft_discard')}
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
@@ -255,13 +392,16 @@ export default function EntryForm() {
           <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={10} placeholder="Write your thoughts here..." className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
           <button type="submit" disabled={loading} className="px-6 py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 transition-colors disabled:opacity-50">
             {loading ? '...' : t('save')}
           </button>
           <button type="button" onClick={() => navigate('/')} className="px-6 py-2.5 border-custom bg-custom-secondary text-custom rounded-lg font-medium hover-bg">
             {t('cancel')}
           </button>
+          <span className="text-xs text-custom-muted">
+            {draftStatus === 'saving' ? t('draft_saving') : draftStatus === 'saved' ? t('draft_saved') : ''}
+          </span>
         </div>
       </form>
     </div>
