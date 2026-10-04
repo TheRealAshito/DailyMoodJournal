@@ -11,3 +11,9 @@ package-lock.json
 backend/fonts/*.ttf
 goal.md
 frontend/dist/
+
+# Environment & secrets
+.env
+.env.*
+*.key
+*.pem
