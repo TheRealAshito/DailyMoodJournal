@@ -187,7 +187,7 @@ DailyMoodJournal/
 │   ├── src/api.js           # Axios HTTP client
 │   ├── src/i18n.jsx         # Translation system
 │   └── public/locales/      # en.json + pt-BR.json
-├── tests/                   # pytest test suite (121 tests)
+├── tests/                   # pytest test suite (172 tests)
 ├── Dockerfile               # Multi-stage build
 ├── docker-compose.yml       # Single-service deployment
 ├── entries/                 # Created at runtime — encrypted journals

@@ -41,7 +41,7 @@ export default function SignupPage() {
     }
     setLoading(true)
     try {
-      await signup(username, password, question, answer)
+      await signup(username.trim(), password, question, answer)
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.detail || 'Signup failed.')

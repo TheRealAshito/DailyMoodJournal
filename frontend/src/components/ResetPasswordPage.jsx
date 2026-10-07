@@ -21,7 +21,7 @@ export default function ResetPasswordPage() {
     setError('')
     setLoading(true)
     try {
-      const r = await api.post('/auth/password-reset-request', { username })
+      const r = await api.post('/auth/password-reset-request', { username: username.trim() })
       if (r.data.question) {
         setQuestion(r.data.question)
         setStep('answer')
@@ -39,7 +39,7 @@ export default function ResetPasswordPage() {
     setError('')
     setLoading(true)
     try {
-      const r = await api.post('/auth/password-reset-verify', { username, answer })
+      const r = await api.post('/auth/password-reset-verify', { username: username.trim(), answer })
       setToken(r.data.token)
       setStep('new_password')
     } catch (err) {

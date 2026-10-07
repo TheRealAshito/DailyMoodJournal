@@ -21,7 +21,7 @@ export default function LoginPage() {
     }
     setLoading(true)
     try {
-      await login(username, password)
+      await login(username.trim(), password)
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed.')

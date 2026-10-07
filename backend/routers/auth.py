@@ -21,6 +21,28 @@ _SANE_USERNAME = re.compile(r"^[a-zA-Z0-9_\-\.]{2,32}$")
 SESSION_COOKIE = "dailymood_session"
 
 
+def _resolve_username(users: dict, raw: str) -> str | None:
+    """Map a submitted username to the stored key in users.json.
+
+    Lookup order preserves backward compatibility:
+    1. Exact raw match — behavior is unchanged for every existing account.
+    2. Trimmed match — stray leading/trailing spaces typed at login are ignored.
+    3. Any stored key equal to the trimmed input — legacy accounts whose key
+       contains whitespace stay reachable without migrating users.json.
+    """
+    if raw in users:
+        return raw
+    trimmed = raw.strip()
+    if not trimmed:
+        return None
+    if trimmed in users:
+        return trimmed
+    for key in users:
+        if key.strip() == trimmed:
+            return key
+    return None
+
+
 def _set_session_cookie(response: Response, sid: str):
     response.set_cookie(
         key=SESSION_COOKIE,
@@ -84,9 +106,10 @@ def me(request: Request):
 @router.post("/login")
 def login(body: LoginRequest, response: Response):
     users = load_users()
-    if body.username not in users:
+    username = _resolve_username(users, body.username)
+    if username is None:
         raise HTTPException(401, "Invalid credentials")
-    user_data = users[body.username]
+    user_data = users[username]
     if not verify_password(body.password, user_data["salt"], user_data["password_hash"]):
         raise HTTPException(401, "Invalid credentials")
 
@@ -95,7 +118,7 @@ def login(body: LoginRequest, response: Response):
     if user_key is None:
         raise HTTPException(401, "Invalid credentials")
 
-    sid = session_store.create(body.username, user_key)
+    sid = session_store.create(username, user_key)
     _set_session_cookie(response, sid)
 
     # Lazy index rebuild for migration (existing entries but no index)
@@ -104,31 +127,32 @@ def login(body: LoginRequest, response: Response):
         from backend.utils import list_user_entries
         import threading
         if is_index_available():
-            stats = get_index_stats(body.username)
-            file_count = len(list_user_entries(body.username))
+            stats = get_index_stats(username)
+            file_count = len(list_user_entries(username))
             if stats["indexed"] == 0 and file_count > 0:
-                threading.Thread(target=rebuild_index, args=(body.username, user_key), daemon=True).start()
+                threading.Thread(target=rebuild_index, args=(username, user_key), daemon=True).start()
     except Exception:
         pass
 
     # Migrate plaintext freewrite files to encrypted
     try:
         from backend.routers.freewrite import migrate_freewrite
-        migrate_freewrite(body.username, user_key)
+        migrate_freewrite(username, user_key)
     except Exception:
         pass
 
     return {
-        "username": body.username,
-        "settings": get_user_settings(body.username),
+        "username": username,
+        "settings": get_user_settings(username),
     }
 
 
 @router.post("/signup")
 def signup(body: SignupRequest, response: Response):
-    if not body.username.strip():
+    username = body.username.strip()
+    if not username:
         raise HTTPException(400, "Username is required")
-    if not _SANE_USERNAME.match(body.username):
+    if not _SANE_USERNAME.match(username):
         raise HTTPException(400, "Username must be 2-32 characters: letters, numbers, hyphens, dots, underscores")
     if len(body.password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
@@ -136,7 +160,7 @@ def signup(body: SignupRequest, response: Response):
         raise HTTPException(400, "Security answer is required")
 
     users = load_users()
-    if body.username in users:
+    if _resolve_username(users, username) is not None:
         raise HTTPException(409, "Username already exists")
 
     ensure_directories()
@@ -153,7 +177,7 @@ def signup(body: SignupRequest, response: Response):
 
     password_hash = hash_password(body.password, salt)
 
-    users[body.username] = {
+    users[username] = {
         "created_at": datetime.now().isoformat(),
         "salt": salt,
         "password_hash": password_hash,
@@ -168,12 +192,12 @@ def signup(body: SignupRequest, response: Response):
     }
     save_users(users)
 
-    sid = session_store.create(body.username, user_key)
+    sid = session_store.create(username, user_key)
     _set_session_cookie(response, sid)
 
     return {
-        "username": body.username,
-        "settings": get_user_settings(body.username),
+        "username": username,
+        "settings": get_user_settings(username),
     }
 
 
@@ -189,24 +213,26 @@ def logout(response: Response, request: Request):
 @router.post("/password-reset-request")
 def reset_request(body: ResetUsernameRequest):
     users = load_users()
-    if body.username not in users:
+    username = _resolve_username(users, body.username)
+    if username is None:
         return {"question": None}
-    return {"question": users[body.username]["security_question"]}
+    return {"question": users[username]["security_question"]}
 
 
 @router.post("/password-reset-verify")
 def reset_verify(body: ResetAnswerRequest):
     users = load_users()
-    if body.username not in users:
+    username = _resolve_username(users, body.username)
+    if username is None:
         raise HTTPException(404, "User not found")
-    user_data = users[body.username]
+    user_data = users[username]
     secret_salt = b64decode(user_data["entry_key_salt_secret"].encode())
     kek_secret = derive_kek(body.answer, secret_salt)
     user_key = unwrap_user_key(user_data["entry_key_encrypted_with_secret"], kek_secret)
     if user_key is None:
         raise HTTPException(401, "Incorrect answer")
 
-    reset_sid = session_store.create(body.username, user_key)
+    reset_sid = session_store.create(username, user_key)
     return {"token": reset_sid}
 
 
