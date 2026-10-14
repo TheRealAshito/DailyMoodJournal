@@ -21,6 +21,8 @@ Built for homelab users who want a private, therapist-friendly journal that runs
 - **Search** — filter by tags and date range
 - **Export / Import** — export all entries as unencrypted `.md` files (`.tar.gz` or `.zip`), or import from archives or plain `.md`/`.txt` files
 - **PDF export** — three kinds: entry PDF (mood-colored headers), stats PDF (matplotlib charts), free write PDF (formatted sessions). All fully localized
+- **Reminders** — in-app nudge banner when today's entry is missing (with streak-at-risk warning), plus optional ntfy push notifications (disabled by default) with configurable time, timezone, and priority (1–5)
+- **Remembered devices** — "Continue as [user]" login picker on trusted devices, with an optional 4–8 digit PIN gate. Full device management in Settings
 - **Dark / Light mode** — default dark mode, toggle in the top navigation bar
 - **i18n** — English and Brazilian Portuguese (PT-BR), switchable in Settings
 
@@ -112,12 +114,15 @@ DailyMood is designed with **privacy as the default**. Here's what that means:
 - You can **export all entries** as unencrypted `.md` files at any time
 - You can **import/export** your entire journal for backups
 - The app runs on **your machine, your network** — nobody else has access
+- **Reminders are opt-in**: ntfy notifications are off by default and only sent to the server URL you configure. Notification text is generic — titles, moods, and streak counts never leave your machine
 
 ### Authentication
 - Passwords are **never stored in plaintext** — salted PBKDF2 hash
 - Security question answers are **encrypted** (not hashed — we need to decrypt them for password recovery)
 - Session IDs are **HTTP-only cookies** (not accessible via JavaScript)
 - Server-side sessions with **24-hour TTL**, automatically cleaned
+- **Remembered devices** use a separate long-lived token (`data/devices.json`): the raw token only ever lives in an HTTP-only cookie, the server stores its hash, and each journal key is wrapped under the token — changing or resetting your password revokes every remembered device
+- **Device PINs are opt-in** and wrap the journal key the same way; they include attempt lockout against brute force. The PIN is never stored
 
 ### File Permissions
 - `users.json`: **0o600** (only the app process owner can read)

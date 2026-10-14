@@ -96,6 +96,7 @@ export default function ResetPasswordPage() {
 
       {step === 'new_password' && (
         <div className="space-y-4">
+          <p className="text-xs text-custom-muted">{t('reset_password_warning')}</p>
           <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('new_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" autoFocus />
           <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t('confirm_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
           <button onClick={handleReset} disabled={loading} className="w-full py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 disabled:opacity-50">{t('reset_password')}</button>

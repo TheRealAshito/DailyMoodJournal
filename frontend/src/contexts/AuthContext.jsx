@@ -16,8 +16,20 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, [])
 
-  const login = useCallback(async (username, password) => {
-    const r = await api.post('/auth/login', { username, password })
+  const login = useCallback(async (username, password, opts = {}) => {
+    const body = { username, remember_device: !!opts.remember_device }
+    if (password) body.password = password
+    if (opts.pin) body.pin = opts.pin
+    if (opts.device_label) body.device_label = opts.device_label
+    const r = await api.post('/auth/login', body)
+    setUser({ username: r.data.username, settings: r.data.settings })
+    return r.data
+  }, [])
+
+  const deviceLogin = useCallback(async (username, pin) => {
+    const body = { username }
+    if (pin) body.pin = pin
+    const r = await api.post('/auth/device-login', body)
     setUser({ username: r.data.username, settings: r.data.settings })
     return r.data
   }, [])
@@ -28,13 +40,13 @@ export function AuthProvider({ children }) {
     return r.data
   }, [])
 
-  const logout = useCallback(async () => {
-    await api.post('/auth/logout')
+  const logout = useCallback(async (forgetDevice = false) => {
+    await api.post('/auth/logout', { forget_device: !!forgetDevice })
     setUser(null)
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, deviceLogin, signup, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   )

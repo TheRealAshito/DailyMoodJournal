@@ -51,10 +51,25 @@ export default function Settings() {
   const [pdfFrom, setPdfFrom] = useState('')
   const [pdfTo, setPdfTo] = useState('')
   const fileRef = useRef(null)
+  const [remMsg, setRemMsg] = useState('')
+  const [remOk, setRemOk] = useState(false)
+  const [ntfyToken, setNtfyToken] = useState('')
+  const [newPin, setNewPin] = useState('')
+  const [pinRequire, setPinRequire] = useState(false)
+  const [pinMsg, setPinMsg] = useState('')
+  const [pinOk, setPinOk] = useState(false)
+  const [devices, setDevices] = useState([])
+  const [devMsg, setDevMsg] = useState('')
+  const [devOk, setDevOk] = useState(false)
 
   useEffect(() => {
     api.get('/settings').then((r) => setSettings(r.data)).catch(() => {})
+    api.get('/auth/my-devices').then((r) => setDevices(r.data?.devices || [])).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (settings) setPinRequire(!!settings.pin_required_on_device)
+  }, [settings?.pin_enabled, settings?.pin_required_on_device])
 
   async function changePassword() {
     setPwMsg('')
@@ -164,6 +179,101 @@ export default function Settings() {
     setNewScaleName('')
     setNewScaleMax(10)
     api.put('/settings', { custom_scales: updated }).catch(() => {})
+  }
+
+  async function saveReminders() {
+    setRemMsg('')
+    try {
+      const body = {
+        reminder_enabled: !!settings.reminder_enabled,
+        reminder_time: settings.reminder_time || '20:00',
+        reminder_timezone: settings.reminder_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        ntfy_url: settings.ntfy_url || '',
+        ntfy_priority: Number(settings.ntfy_priority) || 3,
+      }
+      if (ntfyToken.trim()) body.ntfy_token = ntfyToken.trim()
+      await api.put('/settings', body)
+      setNtfyToken('')
+      setRemOk(true)
+      setRemMsg(t('settings_saved'))
+    } catch (err) {
+      const msg = await extractBlobError(err)
+      setRemOk(false)
+      setRemMsg(msg || 'Failed.')
+    }
+  }
+
+  async function savePin() {
+    setPinMsg('')
+    const pinVal = newPin.trim()
+    if (!/^\d{4,8}$/.test(pinVal)) {
+      setPinOk(false)
+      setPinMsg(t('pin_invalid'))
+      return
+    }
+    try {
+      await api.post('/settings/pin', { pin: pinVal, require_on_device: pinRequire })
+      setSettings({ ...settings, pin_enabled: true, pin_required_on_device: pinRequire })
+      setNewPin('')
+      setPinOk(true)
+      setPinMsg(t('pin_saved'))
+    } catch (err) {
+      const msg = await extractBlobError(err)
+      setPinOk(false)
+      setPinMsg(msg || 'Failed.')
+    }
+  }
+
+  async function removePin() {
+    setPinMsg('')
+    if (!window.confirm(t('remove_pin_confirm'))) return
+    try {
+      await api.delete('/settings/pin')
+      setSettings({ ...settings, pin_enabled: false, pin_required_on_device: false })
+      setPinRequire(false)
+      setPinOk(true)
+      setPinMsg(t('pin_removed'))
+    } catch (err) {
+      const msg = await extractBlobError(err)
+      setPinOk(false)
+      setPinMsg(msg || 'Failed.')
+    }
+  }
+
+  async function loadDevices() {
+    try {
+      const r = await api.get('/auth/my-devices')
+      setDevices(r.data?.devices || [])
+    } catch {}
+  }
+
+  async function forgetDevice(deviceId) {
+    setDevMsg('')
+    try {
+      await api.delete(`/auth/my-devices/${encodeURIComponent(deviceId)}`)
+      setDevOk(true)
+      setDevMsg(t('settings_saved'))
+      await loadDevices()
+    } catch (err) {
+      const msg = await extractBlobError(err)
+      setDevOk(false)
+      setDevMsg(msg || 'Failed.')
+    }
+  }
+
+  async function forgetAllDevices() {
+    setDevMsg('')
+    if (!window.confirm(t('forget_all_confirm'))) return
+    try {
+      await api.delete('/auth/my-devices')
+      setDevOk(true)
+      setDevMsg(t('settings_saved'))
+      await loadDevices()
+    } catch (err) {
+      const msg = await extractBlobError(err)
+      setDevOk(false)
+      setDevMsg(msg || 'Failed.')
+    }
   }
 
   if (!settings) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>
@@ -403,7 +513,95 @@ export default function Settings() {
         </div>
 
         <div className="card-bg border border-custom rounded-xl p-5">
+          <h3 className="font-semibold mb-3">⏰ {t('reminders')}</h3>
+          <p className="text-sm text-custom-muted mb-3">{t('reminders_desc')}</p>
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm text-custom cursor-pointer">
+              <input type="checkbox" checked={!!settings.reminder_enabled} onChange={(e) => setSettings({ ...settings, reminder_enabled: e.target.checked })} className="rounded border-custom" />
+              {t('reminder_enabled')}
+            </label>
+            <div className="flex gap-3 flex-wrap items-end">
+              <div>
+                <label className="block text-xs text-custom-muted mb-1">{t('reminder_time')}</label>
+                <input type="time" value={settings.reminder_time || '20:00'} onChange={(e) => setSettings({ ...settings, reminder_time: e.target.value })} className="px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+              </div>
+              <div className="flex-1 min-w-[180px]">
+                <label className="block text-xs text-custom-muted mb-1">{t('reminder_timezone')}</label>
+                <input type="text" value={settings.reminder_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone} onChange={(e) => setSettings({ ...settings, reminder_timezone: e.target.value })} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-custom-muted mb-1">{t('ntfy_url')}</label>
+              <input type="text" value={settings.ntfy_url || ''} onChange={(e) => setSettings({ ...settings, ntfy_url: e.target.value })} placeholder="https://ntfy.example.com" className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+              <p className="text-xs text-custom-muted mt-1">{t('ntfy_url_help')}</p>
+            </div>
+            <div>
+              <label className="block text-xs text-custom-muted mb-1">{t('ntfy_priority')}</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((p) => (
+                  <button key={p} type="button" onClick={() => setSettings({ ...settings, ntfy_priority: p })} className={`w-10 h-9 rounded-lg text-sm font-medium ${Number(settings.ntfy_priority || 3) === p ? 'bg-cyan-500 text-white' : 'border-custom bg-custom-secondary text-custom'}`}>{p}</button>
+                ))}
+              </div>
+              <p className="text-xs text-custom-muted mt-1">{t('ntfy_priority_desc')}</p>
+            </div>
+            <div>
+              <label className="block text-xs text-custom-muted mb-1">{t('ntfy_token')}</label>
+              <input type="password" value={ntfyToken} onChange={(e) => setNtfyToken(e.target.value)} placeholder={t('ntfy_token_unchanged')} autoComplete="off" className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+            </div>
+            <button onClick={saveReminders} className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600">{t('save_settings')}</button>
+            {remMsg && <p className={`text-sm ${remOk ? 'text-green-600' : 'text-red-500'}`}>{remMsg}</p>}
+          </div>
+        </div>
+
+        <div className="card-bg border border-custom rounded-xl p-5">
+          <h3 className="font-semibold mb-3">🔐 {t('device_pin_title')}</h3>
+          <p className="text-sm text-custom-muted mb-3">{t('device_pin_desc')}</p>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-custom-muted mb-1">{settings.pin_enabled ? t('change_pin') : t('set_pin')}</label>
+              <input type="password" inputMode="numeric" value={newPin} onChange={(e) => setNewPin(e.target.value)} placeholder={t('pin_placeholder')} autoComplete="off" className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-custom cursor-pointer">
+              <input type="checkbox" checked={pinRequire} onChange={(e) => setPinRequire(e.target.checked)} className="rounded border-custom" />
+              {t('require_on_device')}
+            </label>
+            <div className="flex gap-2">
+              <button onClick={savePin} className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600">{settings.pin_enabled ? t('change_pin') : t('set_pin')}</button>
+              {settings.pin_enabled && (
+                <button onClick={removePin} className="px-4 py-2 rounded-lg text-sm font-medium border border-red-300 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">{t('remove_pin')}</button>
+              )}
+            </div>
+            {pinMsg && <p className={`text-sm ${pinOk ? 'text-green-600' : 'text-red-500'}`}>{pinMsg}</p>}
+          </div>
+        </div>
+
+        <div className="card-bg border border-custom rounded-xl p-5">
+          <h3 className="font-semibold mb-3">{t('remembered_devices')}</h3>
+          {devices.length === 0 ? (
+            <p className="text-sm text-custom-muted">{t('no_remembered_devices')}</p>
+          ) : (
+            <>
+              <div className="space-y-2 mb-3">
+                {devices.map((d) => (
+                  <div key={d.device_id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-custom-secondary border border-custom text-sm">
+                    <div>
+                      <span className="font-medium text-custom">{d.label || d.device_id}</span>
+                      {d.current && <span className="text-xs text-custom-muted ml-2">{t('this_device')}</span>}
+                      <div className="text-xs text-custom-muted">{t('device_last_used')}: {d.last_used_at ? new Date(d.last_used_at).toLocaleString() : '—'}</div>
+                    </div>
+                    <button onClick={() => forgetDevice(d.device_id)} className="text-red-500 hover:text-red-700 text-sm font-medium whitespace-nowrap">{t('forget_device')}</button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={forgetAllDevices} className="px-4 py-2 rounded-lg text-sm font-medium border border-red-300 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">{t('forget_all_devices')}</button>
+            </>
+          )}
+          {devMsg && <p className={`text-sm mt-2 ${devOk ? 'text-green-600' : 'text-red-500'}`}>{devMsg}</p>}
+        </div>
+
+        <div className="card-bg border border-custom rounded-xl p-5">
           <h3 className="font-semibold mb-3">{t('change_password')}</h3>
+          <p className="text-xs text-custom-muted mb-3">{t('password_change_warning')}</p>
           <div className="space-y-3">
             <input type="password" value={oldPw} onChange={(e) => setOldPw(e.target.value)} placeholder={t('current_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400 text-sm" />
             <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder={t('new_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400 text-sm" />

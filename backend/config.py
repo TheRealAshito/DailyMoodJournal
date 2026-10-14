@@ -106,9 +106,15 @@ AUTH_KEYS = {
     "entry_key_salt_pwd", "entry_key_encrypted_with_secret",
     "entry_key_salt_secret", "security_question", "created_at",
     "theme", "language", "reflection_categories", "cbt_enabled_categories",
+    # Device PIN (opt-in): wrapped key material must never reach the API
+    "entry_key_encrypted_with_pin", "entry_key_salt_pin",
+    "pin_fails", "pin_locked_until",
+    # Secrets / internal state echoed nowhere
+    "ntfy_token", "reminder_last_notified",
 }
 
-KNOWN_SETTINGS = {"theme", "language", "reflection_categories", "tags", "custom_scales", "sticky_note", "date_format"}
+KNOWN_SETTINGS = {"theme", "language", "reflection_categories", "tags", "custom_scales", "sticky_note", "date_format",
+                  "reminder_enabled", "reminder_time", "reminder_timezone", "ntfy_url", "ntfy_priority", "ntfy_token"}
 
 DATE_FORMAT_OPTIONS = ["YYYY-MM-DD", "DD-MM-YYYY", "MM-DD-YYYY"]
 
@@ -132,6 +138,13 @@ def get_user_settings(username: str) -> dict:
             user.get("cbt_enabled_categories",
                 ["self_reflection", "gratitude", "growth_learning", "emotional_awareness"])),
         "tags": user.get("tags", DEFAULT_TAGS),
+        "reminder_enabled": user.get("reminder_enabled", False),
+        "reminder_time": user.get("reminder_time", "21:00"),
+        "reminder_timezone": user.get("reminder_timezone", "UTC"),
+        "ntfy_url": user.get("ntfy_url", ""),
+        "ntfy_priority": user.get("ntfy_priority", 3),
+        "pin_enabled": bool(user.get("entry_key_encrypted_with_pin")),
+        "pin_required_on_device": bool(user.get("pin_required_on_device", False)),
     }
     for key, value in user.items():
         if key not in AUTH_KEYS and key not in settings:

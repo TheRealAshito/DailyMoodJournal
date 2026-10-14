@@ -14,6 +14,27 @@ const NAV_ITEMS = [
   { to: '/about-cbt', icon: '\uD83E\uDDE0', key: 'about_cbt', end: false },
 ]
 
+function LogoutButton({ onLogout, t }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(!open)} className="px-2 py-1.5 rounded-lg text-sm text-red-500 hover-bg" title={t('logout')}>
+        {String.fromCodePoint(0x1F6AA)}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-56 rounded-lg border border-custom bg-custom-secondary shadow-lg p-2 space-y-1 z-50">
+          <button onClick={() => { setOpen(false); onLogout(false) }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-custom hover-bg transition-colors">
+            {t('logout_keep')}
+          </button>
+          <button onClick={() => { setOpen(false); onLogout(true) }} className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover-bg transition-colors">
+            {t('logout_forget')}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Navbar() {
   const { user, logout } = useAuth()
   const { theme, setTheme } = useTheme()
@@ -21,8 +42,8 @@ export default function Navbar() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  async function handleLogout() {
-    await logout()
+  async function handleLogout(forgetDevice = false) {
+    await logout(forgetDevice)
     navigate('/login')
   }
 
@@ -107,9 +128,7 @@ export default function Navbar() {
               {theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}
             </button>
 
-            <button onClick={handleLogout} className="px-2 py-1.5 rounded-lg text-sm text-red-500 hover-bg" title="Logout">
-              {String.fromCodePoint(0x1F6AA)}
-            </button>
+            <LogoutButton onLogout={handleLogout} t={t} />
           </div>
 
           {/* Mobile actions — just settings + logout */}
@@ -124,9 +143,7 @@ export default function Navbar() {
             >
               ⚙️
             </NavLink>
-            <button onClick={handleLogout} className="px-2 py-1.5 rounded-lg text-sm text-red-500 hover-bg">
-              {String.fromCodePoint(0x1F6AA)}
-            </button>
+            <LogoutButton onLogout={handleLogout} t={t} />
           </div>
         </div>
       </header>

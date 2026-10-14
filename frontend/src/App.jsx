@@ -7,6 +7,7 @@ import { useI18n } from './i18n'
 import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import StickyNote from './components/StickyNote'
+import NudgeBanner from './components/NudgeBanner'
 import LoginPage from './components/LoginPage'
 import SignupPage from './components/SignupPage'
 import ResetPasswordPage from './components/ResetPasswordPage'
@@ -24,6 +25,7 @@ function ProtectedLayout() {
     <div className="min-h-screen flex flex-col bg-custom">
       <Navbar />
       <StickyNote />
+      <NudgeBanner />
       <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
         <Routes>
           <Route index element={<Calendar />} />

@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import auth, entries, export, search, stats, settings, freewrite, drafts
+from backend.routers import auth, entries, export, search, stats, settings, freewrite, drafts, reminders
 from backend.config import ensure_directories
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -46,6 +46,7 @@ app.include_router(stats.router)
 app.include_router(settings.router)
 app.include_router(freewrite.router)
 app.include_router(drafts.router)
+app.include_router(reminders.router)
 
 
 @app.on_event("startup")
@@ -55,6 +56,12 @@ def startup():
     try:
         from backend.index import init_index
         init_index()
+    except Exception:
+        pass
+    # Single daemon thread for ntfy reminders (no-op unless opted in)
+    try:
+        from backend.reminders import start_scheduler
+        start_scheduler()
     except Exception:
         pass
 
