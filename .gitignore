@@ -1,6 +1,7 @@
 entries/
 data/
 *.enc
+commit-reports/
 __pycache__/
 *.pyc
 venv/
