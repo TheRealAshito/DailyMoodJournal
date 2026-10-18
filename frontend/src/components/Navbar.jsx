@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/freewrite', icon: '\uD83D\uDCDD', key: 'free_write', end: false },
   { to: '/search', icon: '\uD83D\uDD0D', key: 'search', end: false },
   { to: '/stats', icon: '\uD83D\uDCCA', key: 'stats', end: false },
+  { to: '/trackers', icon: '\uD83D\uDCC8', key: 'trackers', end: false },
   { to: '/about-cbt', icon: '\uD83E\uDDE0', key: 'about_cbt', end: false },
 ]
 

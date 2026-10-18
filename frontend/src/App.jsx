@@ -16,6 +16,7 @@ import Calendar from './components/Calendar'
 import EntryForm from './components/EntryForm'
 import Search from './components/Search'
 import Stats from './components/Stats'
+import Trackers from './components/Trackers'
 import Settings from './components/Settings'
 import AboutCBT from './components/AboutCBT'
 import FreeWrite from './components/FreeWrite'
@@ -33,6 +34,7 @@ function ProtectedLayout() {
           <Route path="edit/:encodedPath" element={<EntryForm />} />
           <Route path="search" element={<Search />} />
           <Route path="stats" element={<Stats />} />
+          <Route path="trackers" element={<Trackers />} />
           <Route path="settings" element={<Settings />} />
           <Route path="freewrite" element={<FreeWrite />} />
           <Route path="about-cbt" element={<AboutCBT />} />
