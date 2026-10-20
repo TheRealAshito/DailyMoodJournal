@@ -113,7 +113,7 @@ AUTH_KEYS = {
     "ntfy_token", "reminder_last_notified",
 }
 
-KNOWN_SETTINGS = {"theme", "language", "reflection_categories", "tags", "custom_scales", "sticky_note", "date_format",
+KNOWN_SETTINGS = {"theme", "accent", "language", "reflection_categories", "tags", "custom_scales", "sticky_note", "date_format",
                   "reminder_enabled", "reminder_time", "reminder_timezone", "ntfy_url", "ntfy_priority", "ntfy_token"}
 
 DATE_FORMAT_OPTIONS = ["YYYY-MM-DD", "DD-MM-YYYY", "MM-DD-YYYY"]
@@ -131,6 +131,7 @@ def get_user_settings(username: str) -> dict:
     user = users.get(username, {})
     settings = {
         "theme": user.get("theme", "light"),
+        "accent": user.get("accent", "terracotta"),
         "language": user.get("language", "en"),
         "date_format": user.get("date_format", "YYYY-MM-DD"),
         "sticky_note": user.get("sticky_note", ""),

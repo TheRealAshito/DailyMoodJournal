@@ -95,37 +95,37 @@ export default function Calendar() {
       {/* Header — stacks on mobile */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-custom">{t('journal')}</h1>
+          <h1 className="display text-2xl">{t('journal')}</h1>
           <p className="text-sm text-custom-muted mt-0.5">{t('total_entries')}: {entries.length}</p>
         </div>
         {/* Desktop: inline button. Mobile: hidden (FAB below) */}
         <button
           onClick={() => navigate('/new')}
-          className="hidden sm:inline-flex px-5 py-2.5 bg-cyan-500 text-white rounded-xl font-medium hover:bg-cyan-600 transition-all shadow-sm hover:shadow-md active:scale-95"
+          className="btn btn-primary max-sm:!hidden"
         >
           + {t('new_entry')}
         </button>
       </div>
 
       {/* Calendar card */}
-      <div className="card-bg border border-custom rounded-2xl p-3 sm:p-5 mb-6 shadow-sm">
+      <div className="card p-3 sm:p-5 mb-6">
         {/* Month navigator */}
         <div className="flex items-center justify-between mb-4 sm:mb-5">
-          <button onClick={prevMonth} className="w-9 h-9 flex items-center justify-center rounded-xl border border-custom bg-custom-secondary text-custom hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:border-cyan-300 transition-all">
+          <button onClick={prevMonth} className="btn btn-secondary w-9 h-9 !p-0">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
 
           <div className="text-center">
-            <h2 className="text-lg font-bold text-custom">{t(`month_${month}`)} <span className="text-custom-muted font-normal">{year}</span></h2>
+            <h2 className="display text-lg">{t(`month_${month}`)} <span className="text-custom-muted font-normal">{year}</span></h2>
           </div>
 
-          <button onClick={nextMonth} className="w-9 h-9 flex items-center justify-center rounded-xl border border-custom bg-custom-secondary text-custom hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:border-cyan-300 transition-all">
+          <button onClick={nextMonth} className="btn btn-secondary w-9 h-9 !p-0">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-16"><div className="w-7 h-7 border-[3px] border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="flex justify-center py-16"><div className="spin" /></div>
         ) : (
           <>
             {/* Day headers */}
@@ -151,15 +151,18 @@ export default function Calendar() {
                     key={`day-${day}`}
                     onClick={() => setSelectedDate(dateKey)}
                     onDoubleClick={() => navigate(`/new?date=${dateKey}`)}
-                    className={`
+                    className={`calendar-cell
                       relative flex flex-col items-center justify-center py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all
-                      ${isSelected ? 'ring-2 ring-cyan-400 bg-cyan-50 dark:bg-cyan-900/20' : color ? 'ring-2' : ''}
-                      ${isToday && !isSelected ? 'ring-1 ring-cyan-300' : ''}
-                      ${!isSelected && !isToday ? 'hover:bg-custom-secondary' : ''}
+                      ${isSelected ? 'ring-2 bg-accent-soft' : color ? 'ring-2' : isToday ? 'ring-1' : ''}
+                      ${!isSelected && !isToday ? 'hover-bg' : ''}
                     `}
-                    style={color && !isSelected ? { '--tw-ring-color': color } : {}}
+                    style={
+                      isSelected ? { '--tw-ring-color': 'var(--accent)' } :
+                      color ? { '--tw-ring-color': color } :
+                      isToday ? { '--tw-ring-color': 'var(--accent)' } : {}
+                    }
                   >
-                    <span className={`${isToday ? 'text-cyan-500 font-bold' : 'text-custom'}`}>{day}</span>
+                    <span className={`${isToday ? 'text-accent font-bold' : 'text-custom'}`}>{day}</span>
                   </button>
                 )
               })}
@@ -183,21 +186,21 @@ export default function Calendar() {
       <div className="mb-4">
         {/* Stacks on mobile */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-          <h3 className="text-lg font-semibold text-custom">
+          <h3 className="section-title">
             {t('entries_for')}
             <span className="ml-2 text-custom-muted font-normal text-sm">{formatDate(selectedDate)}</span>
           </h3>
           <FormattedDateInput
             value={selectedDate}
             onChange={(iso) => setSelectedDate(iso)}
-            className="px-3 py-1.5 rounded-xl border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            className="input input-compact !pr-9"
           />
         </div>
 
         {dayEntries.length === 0 ? (
-          <div className="card-bg border border-custom rounded-2xl p-6 sm:p-8 text-center">
+          <div className="card p-6 sm:p-8 text-center">
             <p className="text-custom-muted text-sm mb-3">{t('no_entries')}</p>
-            <button onClick={() => navigate('/new')} className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 transition-colors">{t('write_one')}</button>
+            <button onClick={() => navigate('/new')} className="btn btn-primary">{t('write_one')}</button>
           </div>
         ) : (
           <div className="space-y-3">
@@ -211,7 +214,7 @@ export default function Calendar() {
       {/* Mobile FAB — fixed bottom-right */}
       <button
         onClick={() => navigate('/new')}
-        className="sm:hidden fixed bottom-6 right-6 w-14 h-14 bg-cyan-500 text-white rounded-full shadow-lg hover:bg-cyan-600 active:scale-95 transition-all flex items-center justify-center z-30"
+        className="btn btn-primary fixed bottom-6 right-6 z-30 w-14 h-14 !p-0 !rounded-full sm:!hidden"
         aria-label={t('new_entry')}
       >
         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">

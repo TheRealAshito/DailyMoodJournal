@@ -99,7 +99,6 @@ export default function EntryForm() {
 
   useEffect(() => {
     let cancelled = false
-
     async function load() {
       if (isEditing) {
         const path = decodeURIComponent(encodedPath)
@@ -258,22 +257,22 @@ export default function EntryForm() {
   }
 
   if (fetching) {
-    return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" /></div>
+    return <div className="flex justify-center py-20"><div className="spin" /></div>
   }
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-xl font-bold mb-6">{isEditing ? t('edit') : t('new_entry')}</h1>
+      <h1 className="display text-xl mb-6">{isEditing ? t('edit') : t('new_entry')}</h1>
 
-      {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 rounded-lg p-3 mb-4 text-sm">{error}</div>}
+      {error && <div className="rounded-lg border border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)] px-3 py-2.5 mb-4 text-sm">{error}</div>}
 
       {restoredAt && (
-        <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-3 mb-4 text-sm flex items-center justify-between gap-3">
+        <div className="rounded-lg border border-custom bg-accent-soft px-3 py-2.5 mb-4 text-sm flex items-center justify-between gap-3">
           <span>{t('draft_restored')}{restoredAt.length > 10 ? ` (${restoredAt.slice(11, 16)})` : ''}</span>
           <button
             type="button"
             onClick={handleDiscardDraft}
-            className="px-3 py-1.5 rounded-lg border-custom bg-custom-secondary text-custom text-xs font-medium hover-bg whitespace-nowrap"
+            className="btn btn-secondary btn-sm whitespace-nowrap"
           >
             {t('draft_discard')}
           </button>
@@ -282,18 +281,18 @@ export default function EntryForm() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium mb-1">{t('title')}</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" autoFocus />
+          <label className="form-label">{t('title')}</label>
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input" autoFocus />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">{t('date')}</label>
-            <FormattedDateInput value={edate} onChange={setEdate} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+            <label className="form-label">{t('date')}</label>
+            <FormattedDateInput value={edate} onChange={setEdate} className="input !pr-9" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">{t('time')}</label>
-            <input type="time" value={etime} onChange={(e) => setEtime(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+            <label className="form-label">{t('time')}</label>
+            <input type="time" value={etime} onChange={(e) => setEtime(e.target.value)} className="input" />
           </div>
         </div>
 
@@ -303,7 +302,7 @@ export default function EntryForm() {
           <div className="space-y-4">
             {(settings.custom_scales || []).map((scale) => (
               <div key={scale.name}>
-                <label className="block text-sm font-medium mb-1">
+                <label className="form-label">
                   {scale.name}
                   <span className="ml-2 text-xs text-custom-muted">{scaleValues[scale.name] ?? Math.round((scale.min + scale.max) / 2)} / {scale.max}</span>
                 </label>
@@ -314,7 +313,7 @@ export default function EntryForm() {
                   step={scale.step || 1}
                   value={scaleValues[scale.name] ?? Math.round((scale.min + scale.max) / 2)}
                   onChange={(e) => setScaleValues({ ...scaleValues, [scale.name]: parseInt(e.target.value, 10) })}
-                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-custom-secondary accent-cyan-500"
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-custom-secondary accent-[var(--accent)]"
                 />
                 <div className="flex justify-between text-xs text-custom-muted mt-0.5">
                   <span>{scale.min}</span>
@@ -326,7 +325,7 @@ export default function EntryForm() {
         )}
 
         <div>
-          <label className="block text-sm font-medium mb-2">{t('tags')}</label>
+          <label className="form-label mb-2">{t('tags')}</label>
           <div className="flex flex-wrap gap-2">
             {(settings.tags?.[settings.language] || settings.tags?.en || []).map((tag) => {
               const active = selectedTags.includes(tag)
@@ -341,11 +340,7 @@ export default function EntryForm() {
                       setSelectedTags([...selectedTags, tag])
                     }
                   }}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    active
-                      ? 'bg-cyan-500 text-white shadow-sm'
-                      : 'bg-custom-secondary border border-custom text-custom hover:border-cyan-400'
-                  }`}
+                  className={`chip ${active ? 'chip-active' : ''}`}
                 >
                   {tag}
                 </button>
@@ -359,19 +354,19 @@ export default function EntryForm() {
 
         <div>
           <label className="flex items-center gap-2 text-sm font-medium mb-2 cursor-pointer">
-            <input type="checkbox" checked={includePrompts} onChange={togglePrompts} className="w-4 h-4 accent-cyan-500" />
+            <input type="checkbox" checked={includePrompts} onChange={togglePrompts} className="w-4 h-4 accent-[var(--accent)]" />
             {t('include_reflection')}
           </label>
 
           {includePrompts && (
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 mb-4 text-sm">
-              <p className="font-medium text-indigo-700 dark:text-indigo-300">{t('reflection_tip')}</p>
+            <div className="bg-accent-soft border border-custom rounded-xl p-4 mb-4 text-sm">
+              <p className="font-medium text-accent">{t('reflection_tip')}</p>
             </div>
           )}
 
           {includePrompts && prompts.map((p, i) => (
             <div key={i} className="mb-3">
-              <p className="text-sm font-medium text-indigo-600 mb-1">{t(p.key)}</p>
+              <p className="text-sm font-medium text-accent mb-1">{t(p.key)}</p>
               <textarea
                 value={responses[i]}
                 onChange={(e) => {
@@ -381,22 +376,22 @@ export default function EntryForm() {
                 }}
                 rows={2}
                 placeholder={t('reflection_placeholder')}
-                className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="input text-sm"
               />
             </div>
           ))}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">{t('body')}</label>
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={10} placeholder="Write your thoughts here..." className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+          <label className="form-label">{t('body')}</label>
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={10} placeholder="Write your thoughts here..." className="input" />
         </div>
 
         <div className="flex gap-3 items-center">
-          <button type="submit" disabled={loading} className="px-6 py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 transition-colors disabled:opacity-50">
+          <button type="submit" disabled={loading} className="btn btn-primary btn-lg">
             {loading ? '...' : t('save')}
           </button>
-          <button type="button" onClick={() => navigate('/')} className="px-6 py-2.5 border-custom bg-custom-secondary text-custom rounded-lg font-medium hover-bg">
+          <button type="button" onClick={() => navigate('/')} className="btn btn-secondary btn-lg">
             {t('cancel')}
           </button>
           <span className="text-xs text-custom-muted">

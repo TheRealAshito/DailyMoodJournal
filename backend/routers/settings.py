@@ -12,6 +12,7 @@ _PIN_RE = re.compile(r"^\d{4,8}$")
 
 class SettingsUpdate(BaseModel):
     theme: str | None = None
+    accent: str | None = None
     language: str | None = None
     reflection_categories: list[str] | None = None
     tags: dict | None = None
@@ -41,6 +42,8 @@ def update_settings(body: SettingsUpdate, session: dict = Depends(get_current_se
     updates = {}
     if body.theme is not None:
         updates["theme"] = body.theme
+    if body.accent is not None:
+        updates["accent"] = body.accent
     if body.language is not None:
         updates["language"] = body.language
     if body.reflection_categories is not None:

@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import api from '../api'
 import { useI18n } from '../i18n'
 
-const INPUT_CLS = 'w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400'
-const BTN_PRIMARY = 'px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600'
-const BTN_NEUTRAL = 'px-3 py-1.5 rounded-lg text-sm font-medium border border-custom text-custom hover-bg transition-colors'
-const BTN_DANGER = 'px-3 py-1.5 rounded-lg text-sm font-medium border border-red-300 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
+const INPUT_CLS = 'input'
+const BTN_PRIMARY = 'btn btn-primary'
+const BTN_NEUTRAL = 'btn btn-secondary'
+const BTN_DANGER = 'btn btn-danger'
 
 function pad(n) {
   return String(n).padStart(2, '0')
@@ -113,38 +113,38 @@ function TimerCard({ tracker, onChange }) {
   }
 
   return (
-    <div className="card-bg border border-custom rounded-xl p-5">
+    <div className="card card-hover p-5">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-semibold text-custom">{tracker.name}</h3>
+        <h3 className="section-title">{tracker.name}</h3>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={() => setEditing(!editing)} className={BTN_NEUTRAL}>{t('edit')}</button>
-          <button onClick={handleDelete} className={BTN_DANGER}>{t('delete')}</button>
+          <button onClick={() => setEditing(!editing)} className={BTN_NEUTRAL + ' btn-sm'}>{t('edit')}</button>
+          <button onClick={handleDelete} className={BTN_DANGER + ' btn-sm'}>{t('delete')}</button>
         </div>
       </div>
 
       <div className="mt-3 text-center">
-        <div className="text-4xl sm:text-5xl font-mono font-bold text-cyan-500 tabular-nums">{elapsedText}</div>
+        <div className="text-4xl sm:text-5xl font-mono font-bold text-accent tabular-nums">{elapsedText}</div>
         <div className="mt-1 text-sm text-custom-muted">{t('timer_longest', { value: longestValue })}</div>
       </div>
 
       {tracker.note ? (
-        <div className="mt-4 px-4 py-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-custom italic text-center">
+        <div className="mt-4 px-4 py-3 rounded-lg bg-accent-soft border border-accent text-custom italic text-center">
           {tracker.note}
         </div>
       ) : null}
 
       {editing && (
-        <form onSubmit={handleSaveEdit} className="mt-4 space-y-3 border-t border-custom pt-4">
+        <form onSubmit={handleSaveEdit} className="mt-4 space-y-3 divider pt-4">
           <div>
-            <label className="block text-sm text-custom-muted mb-1">{t('tracker_name')}</label>
+            <label className="form-label">{t('tracker_name')}</label>
             <input type="text" value={name} onChange={(ev) => setName(ev.target.value)} className={INPUT_CLS} />
           </div>
           <div>
-            <label className="block text-sm text-custom-muted mb-1">{t('tracker_last_done')}</label>
+            <label className="form-label">{t('tracker_last_done')}</label>
             <input type="datetime-local" value={lastDone} onChange={(ev) => setLastDone(ev.target.value)} className={INPUT_CLS} />
           </div>
           <div>
-            <label className="block text-sm text-custom-muted mb-1">{t('tracker_note')}</label>
+            <label className="form-label">{t('tracker_note')}</label>
             <textarea value={note} onChange={(ev) => setNote(ev.target.value)} rows={2} placeholder={t('tracker_note_placeholder')} className={INPUT_CLS} />
           </div>
           <div className="flex gap-2">
@@ -158,7 +158,7 @@ function TimerCard({ tracker, onChange }) {
         <button onClick={handleReset} className={BTN_PRIMARY}>{t('i_did_it_again')}</button>
       </div>
 
-      {msg && <p className="mt-3 text-sm text-red-500">{msg}</p>}
+      {msg && <p className="mt-3 text-sm text-[var(--danger)]">{msg}</p>}
     </div>
   )
 }
@@ -278,28 +278,28 @@ function CounterCard({ tracker, onChange }) {
   }
 
   return (
-    <div className="card-bg border border-custom rounded-xl p-5">
+    <div className="card card-hover p-5">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-semibold text-custom">{tracker.name}</h3>
+        <h3 className="section-title">{tracker.name}</h3>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={() => setEditing(!editing)} className={BTN_NEUTRAL}>{t('edit')}</button>
-          <button onClick={handleDelete} className={BTN_DANGER}>{t('delete')}</button>
+          <button onClick={() => setEditing(!editing)} className={BTN_NEUTRAL + ' btn-sm'}>{t('edit')}</button>
+          <button onClick={handleDelete} className={BTN_DANGER + ' btn-sm'}>{t('delete')}</button>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-3">
-        <span className="px-3 py-1.5 rounded-lg bg-custom-secondary border border-custom text-custom font-semibold tabular-nums">
+      <div className="mt-3 flex items-center gap-2">
+        <span className="chip chip-active tabular-nums">
           {t('counter_total', { count: tracker.event_count ?? 0 })}
         </span>
-        <span className="px-3 py-1.5 rounded-lg bg-custom-secondary border border-custom text-custom-muted tabular-nums">
+        <span className="chip tabular-nums">
           {t('counter_today', { count: tracker.today_count ?? 0 })}
         </span>
       </div>
 
       {editing && (
-        <form onSubmit={handleSaveEdit} className="mt-4 space-y-3 border-t border-custom pt-4">
+        <form onSubmit={handleSaveEdit} className="mt-4 space-y-3 divider pt-4">
           <div>
-            <label className="block text-sm text-custom-muted mb-1">{t('tracker_name')}</label>
+            <label className="form-label">{t('tracker_name')}</label>
             <input type="text" value={name} onChange={(ev) => setName(ev.target.value)} className={INPUT_CLS} />
           </div>
           <div className="flex gap-2">
@@ -313,25 +313,25 @@ function CounterCard({ tracker, onChange }) {
         {!showLog ? (
           <button onClick={() => setShowLog(true)} className={BTN_PRIMARY}>{t('log_occurrence')}</button>
         ) : (
-          <form onSubmit={handleLog} className="space-y-3 border-t border-custom pt-4">
+          <form onSubmit={handleLog} className="space-y-3 divider pt-4">
             <div>
-              <label className="block text-sm text-custom-muted mb-1">{t('event_doing')}</label>
+              <label className="form-label">{t('event_doing')}</label>
               <input type="text" value={doing} onChange={(ev) => setDoing(ev.target.value)} className={INPUT_CLS} />
             </div>
             <div>
-              <label className="block text-sm text-custom-muted mb-1">{t('event_feeling')}</label>
+              <label className="form-label">{t('event_feeling')}</label>
               <input type="text" value={feeling} onChange={(ev) => setFeeling(ev.target.value)} className={INPUT_CLS} />
             </div>
             <div>
-              <label className="block text-sm text-custom-muted mb-1">{t('event_mind')}</label>
+              <label className="form-label">{t('event_mind')}</label>
               <input type="text" value={mind} onChange={(ev) => setMind(ev.target.value)} className={INPUT_CLS} />
             </div>
             <div>
-              <label className="block text-sm text-custom-muted mb-1">{t('event_triggers')}</label>
+              <label className="form-label">{t('event_triggers')}</label>
               <input type="text" value={triggers} onChange={(ev) => setTriggers(ev.target.value)} placeholder={t('event_triggers_placeholder')} className={INPUT_CLS} />
             </div>
             <div>
-              <label className="block text-sm text-custom-muted mb-1">{t('event_when')}</label>
+              <label className="form-label">{t('event_when')}</label>
               <input type="datetime-local" value={at} onChange={(ev) => setAt(ev.target.value)} className={INPUT_CLS} />
             </div>
             <div className="flex gap-2">
@@ -342,7 +342,7 @@ function CounterCard({ tracker, onChange }) {
         )}
       </div>
 
-      {msg && <p className="mt-3 text-sm text-red-500">{msg}</p>}
+      {msg && <p className="mt-3 text-sm text-[var(--danger)]">{msg}</p>}
 
       {/* Events grouped by day */}
       <div className="mt-5">
@@ -384,7 +384,7 @@ function CounterCard({ tracker, onChange }) {
                         onClick={() => handleDeleteEvent(ev.id)}
                         title={t('delete')}
                         aria-label={t('delete')}
-                        className="shrink-0 w-7 h-7 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium"
+                        className="shrink-0 w-7 h-7 rounded-lg text-[var(--danger)] hover-bg text-sm font-medium"
                       >
                         ✕
                       </button>
@@ -399,7 +399,7 @@ function CounterCard({ tracker, onChange }) {
 
       {/* Patterns */}
       {(perDay.length > 0 || triggerCounts.length > 0) && (
-        <div className="mt-5 border-t border-custom pt-4">
+        <div className="mt-5 divider pt-4">
           <h4 className="text-sm font-semibold text-custom-muted uppercase tracking-wide">{t('patterns_title')}</h4>
           {perDay.length > 0 && (
             <div className="mt-3">
@@ -421,7 +421,7 @@ function CounterCard({ tracker, onChange }) {
               <div className="text-xs font-semibold text-custom-muted">{t('patterns_triggers')}</div>
               <div className="mt-1 flex flex-wrap gap-2">
                 {triggerCounts.map(([trg, count]) => (
-                  <span key={trg} className="px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 border border-cyan-500/30 text-custom">
+                  <span key={trg} className="chip">
                     {trg} ×{count}
                   </span>
                 ))}
@@ -480,13 +480,13 @@ export default function Trackers() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-custom mb-6">{t('trackers')}</h2>
+      <h2 className="display text-2xl mb-6">{t('trackers')}</h2>
 
       {/* New tracker form */}
-      <form onSubmit={handleCreate} className="card-bg border border-custom rounded-xl p-5 mb-6 space-y-4">
-        <h3 className="text-lg font-semibold text-custom">{t('new_tracker')}</h3>
+      <form onSubmit={handleCreate} className="card p-5 mb-6 space-y-4">
+        <h3 className="section-title">{t('new_tracker')}</h3>
         <div>
-          <label className="block text-sm text-custom-muted mb-1">{t('tracker_name')}</label>
+          <label className="form-label">{t('tracker_name')}</label>
           <input
             type="text"
             value={name}
@@ -496,19 +496,19 @@ export default function Trackers() {
           />
         </div>
         <div>
-          <label className="block text-sm text-custom-muted mb-1">{t('tracker_type')}</label>
+          <label className="form-label">{t('tracker_type')}</label>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setType('timer')}
-              className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${type === 'timer' ? 'bg-cyan-500 text-white' : 'border-custom bg-custom-secondary text-custom'}`}
+              className={`btn flex-1 ${type === 'timer' ? 'btn-primary' : 'btn-secondary'}`}
             >
               {t('type_timer')}
             </button>
             <button
               type="button"
               onClick={() => setType('counter')}
-              className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${type === 'counter' ? 'bg-cyan-500 text-white' : 'border-custom bg-custom-secondary text-custom'}`}
+              className={`btn flex-1 ${type === 'counter' ? 'btn-primary' : 'btn-secondary'}`}
             >
               {t('type_counter')}
             </button>
@@ -517,11 +517,11 @@ export default function Trackers() {
         {type === 'timer' && (
           <>
             <div>
-              <label className="block text-sm text-custom-muted mb-1">{t('tracker_last_done')}</label>
+              <label className="form-label">{t('tracker_last_done')}</label>
               <input type="datetime-local" value={lastDone} onChange={(ev) => setLastDone(ev.target.value)} className={INPUT_CLS} />
             </div>
             <div>
-              <label className="block text-sm text-custom-muted mb-1">{t('tracker_note')}</label>
+              <label className="form-label">{t('tracker_note')}</label>
               <textarea
                 value={note}
                 onChange={(ev) => setNote(ev.target.value)}
@@ -532,13 +532,13 @@ export default function Trackers() {
             </div>
           </>
         )}
-        {err && <p className="text-sm text-red-500">{err}</p>}
+        {err && <p className="text-sm text-[var(--danger)]">{err}</p>}
         <button type="submit" className={BTN_PRIMARY}>{t('create_tracker')}</button>
       </form>
 
       {/* Tracker list */}
       {loaded && trackers.length === 0 ? (
-        <div className="card-bg border border-custom rounded-2xl p-6 sm:p-8 text-center">
+        <div className="card p-6 sm:p-8 text-center">
           <p className="text-custom-muted">{t('no_trackers')}</p>
         </div>
       ) : (

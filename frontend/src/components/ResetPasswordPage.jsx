@@ -72,39 +72,39 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-bold text-center mb-1">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
+    <div className="card w-full max-w-sm px-8 py-9 fade-up">
+      <h1 className="display text-2xl text-center mb-1">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
       <p className="text-center text-custom-muted mb-6">{t('reset_password')}</p>
 
-      {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 rounded-lg p-3 mb-4 text-sm">{error}</div>}
-      {success && <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 rounded-lg p-3 mb-4 text-sm">{success}</div>}
+      {error && <div className="rounded-lg border border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)] px-3 py-2.5 mb-4 text-sm">{error}</div>}
+      {success && <div className="rounded-lg border border-[var(--success)] bg-custom-secondary text-[var(--success)] px-3 py-2.5 mb-4 text-sm">{success}</div>}
 
       {step === 'username' && (
         <div className="space-y-4">
-          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t('username')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" autoFocus />
-          <button onClick={handleUsername} disabled={loading} className="w-full py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 disabled:opacity-50">{t('continue')}</button>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t('username')} className="input" autoFocus />
+          <button onClick={handleUsername} disabled={loading} className="btn btn-primary btn-lg w-full">{t('continue')}</button>
         </div>
       )}
 
       {step === 'answer' && (
         <div className="space-y-4">
           <p className="text-sm text-custom-muted">{question}</p>
-          <input type="text" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={t('security_answer')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" autoFocus />
-          <button onClick={handleAnswer} disabled={loading} className="w-full py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 disabled:opacity-50">{t('verify')}</button>
+          <input type="text" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={t('security_answer')} className="input" autoFocus />
+          <button onClick={handleAnswer} disabled={loading} className="btn btn-primary btn-lg w-full">{t('verify')}</button>
         </div>
       )}
 
       {step === 'new_password' && (
         <div className="space-y-4">
           <p className="text-xs text-custom-muted">{t('reset_password_warning')}</p>
-          <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('new_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" autoFocus />
-          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t('confirm_password')} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
-          <button onClick={handleReset} disabled={loading} className="w-full py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 disabled:opacity-50">{t('reset_password')}</button>
+          <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('new_password')} className="input" autoFocus />
+          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t('confirm_password')} className="input" />
+          <button onClick={handleReset} disabled={loading} className="btn btn-primary btn-lg w-full">{t('reset_password')}</button>
         </div>
       )}
 
       <p className="mt-4 text-center text-sm text-custom-muted">
-        <Link to="/login" className="text-cyan-500 hover:underline">{t('back_to_login')}</Link>
+        <Link to="/login" className="text-accent hover:underline">{t('back_to_login')}</Link>
       </p>
     </div>
   )

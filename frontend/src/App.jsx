@@ -5,53 +5,47 @@ import { useTheme } from './contexts/ThemeContext'
 import { useDateFormat } from './contexts/DateFormatContext'
 import { useI18n } from './i18n'
 import ErrorBoundary from './components/ErrorBoundary'
-import Navbar from './components/Navbar'
-import StickyNote from './components/StickyNote'
-import NudgeBanner from './components/NudgeBanner'
+import AppShell from './components/AppShell'
 import LoginPage from './components/LoginPage'
 import SignupPage from './components/SignupPage'
 import ResetPasswordPage from './components/ResetPasswordPage'
-import HowToUse from './components/HowToUse'
 import Calendar from './components/Calendar'
 import EntryForm from './components/EntryForm'
-import Search from './components/Search'
-import Stats from './components/Stats'
+import Insights from './components/Insights'
 import Trackers from './components/Trackers'
 import Settings from './components/Settings'
-import AboutCBT from './components/AboutCBT'
+import Help from './components/Help'
 import FreeWrite from './components/FreeWrite'
 
 function ProtectedLayout() {
   return (
-    <div className="min-h-screen flex flex-col bg-custom">
-      <Navbar />
-      <StickyNote />
-      <NudgeBanner />
-      <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
-        <Routes>
-          <Route index element={<Calendar />} />
-          <Route path="new" element={<EntryForm />} />
-          <Route path="edit/:encodedPath" element={<EntryForm />} />
-          <Route path="search" element={<Search />} />
-          <Route path="stats" element={<Stats />} />
-          <Route path="trackers" element={<Trackers />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="freewrite" element={<FreeWrite />} />
-          <Route path="about-cbt" element={<AboutCBT />} />
-          <Route path="how-to-use" element={<HowToUse />} />
-        </Routes>
-      </main>
-    </div>
+    <AppShell>
+      <Routes>
+        <Route index element={<Calendar />} />
+        <Route path="new" element={<EntryForm />} />
+        <Route path="edit/:encodedPath" element={<EntryForm />} />
+        <Route path="insights" element={<Insights />} />
+        <Route path="trackers" element={<Trackers />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="freewrite" element={<FreeWrite />} />
+        <Route path="help" element={<Help />} />
+        {/* Old paths keep working via redirects */}
+        <Route path="search" element={<Navigate to="/insights" replace />} />
+        <Route path="stats" element={<Navigate to="/insights" replace />} />
+        <Route path="about-cbt" element={<Navigate to="/help" replace />} />
+        <Route path="how-to-use" element={<Navigate to="/help" replace />} />
+      </Routes>
+    </AppShell>
   )
 }
 
 export default function App() {
   const { user, loading } = useAuth()
   const { changeLocale } = useI18n()
-  const { setTheme } = useTheme()
+  const { setTheme, setAccent } = useTheme()
   const { setDateFormat } = useDateFormat()
 
-  // Sync locale, theme, and date format from backend settings whenever user state changes
+  // Sync locale, theme, accent, and date format from backend settings
   useEffect(() => {
     if (user?.settings?.language) {
       changeLocale(user.settings.language)
@@ -59,15 +53,18 @@ export default function App() {
     if (user?.settings?.theme) {
       setTheme(user.settings.theme)
     }
+    if (user?.settings?.accent) {
+      setAccent(user.settings.accent)
+    }
     if (user?.settings?.date_format) {
       setDateFormat(user.settings.date_format)
     }
-  }, [user?.settings?.language, user?.settings?.theme, user?.settings?.date_format])
+  }, [user?.settings?.language, user?.settings?.theme, user?.settings?.accent, user?.settings?.date_format])
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-custom">
-        <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+        <div className="spin" />
       </div>
     )
   }

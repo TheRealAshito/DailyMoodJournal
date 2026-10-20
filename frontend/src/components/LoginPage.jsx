@@ -95,23 +95,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-bold text-center mb-1">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
+    <div className="card w-full max-w-sm px-8 py-9 fade-up">
+      <h1 className="display text-2xl text-center mb-1">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
       <p className="text-center text-custom-muted mb-6">{t('login')}</p>
 
-      {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 rounded-lg p-3 mb-4 text-sm">{error}</div>}
+      {error && <div className="rounded-lg border border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)] px-3 py-2.5 mb-4 text-sm">{error}</div>}
 
       {pinUser ? (
         <form onSubmit={handlePinSubmit} className="space-y-4">
           <p className="text-sm text-custom-muted">{t('pin_required_for', { username: pinUser })}</p>
           <div>
-            <label className="block text-sm font-medium mb-1">{t('pin_label')}</label>
-            <input type="password" inputMode="numeric" value={pin} onChange={(e) => setPin(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" autoFocus />
+            <label className="form-label">{t('pin_label')}</label>
+            <input type="password" inputMode="numeric" value={pin} onChange={(e) => setPin(e.target.value)} className="input" autoFocus />
           </div>
-          <button type="submit" disabled={pinLoading} className="w-full py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 transition-colors disabled:opacity-50">
+          <button type="submit" disabled={pinLoading} className="btn btn-primary btn-lg w-full">
             {pinLoading ? '...' : t('login')}
           </button>
-          <button type="button" onClick={() => { setPinUser(''); setPin(''); setError('') }} className="w-full text-sm text-cyan-500 hover:underline">
+          <button type="button" onClick={() => { setPinUser(''); setPin(''); setError('') }} className="btn btn-ghost w-full">
             {t('back')}
           </button>
         </form>
@@ -122,36 +122,36 @@ export default function LoginPage() {
               <button
                 onClick={() => handleDeviceLogin(u.username)}
                 disabled={loading}
-                className="w-full py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 transition-colors disabled:opacity-50"
+                className="btn btn-primary w-full"
               >
                 {t('continue_as', { username: u.username })}
               </button>
               {u.label && <p className="text-xs text-custom-muted text-center mt-1">{u.label}</p>}
             </div>
           ))}
-          <button type="button" onClick={() => setPickerVisible(false)} className="w-full text-sm text-cyan-500 hover:underline pt-1">
+          <button type="button" onClick={() => setPickerVisible(false)} className="btn btn-ghost w-full">
             {t('sign_in_another_user')}
           </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">{t('username')}</label>
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" autoFocus />
+            <label className="form-label">{t('username')}</label>
+            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="input" autoFocus />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">{t('password')}</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+            <label className="form-label">{t('password')}</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" />
           </div>
           <label className="flex items-center gap-2 text-sm text-custom cursor-pointer">
-            <input type="checkbox" checked={rememberDevice} onChange={(e) => setRememberDevice(e.target.checked)} className="rounded border-custom" />
+            <input type="checkbox" checked={rememberDevice} onChange={(e) => setRememberDevice(e.target.checked)} className="rounded border-custom accent-[var(--accent)]" />
             {t('remember_device')}
           </label>
-          <button type="submit" disabled={loading} className="w-full py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 transition-colors disabled:opacity-50">
+          <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full">
             {loading ? '...' : t('login')}
           </button>
           {devices.length > 0 && (
-            <button type="button" onClick={() => setPickerVisible(true)} className="w-full text-sm text-cyan-500 hover:underline">
+            <button type="button" onClick={() => setPickerVisible(true)} className="btn btn-ghost w-full">
               {t('back')}
             </button>
           )}
@@ -159,8 +159,8 @@ export default function LoginPage() {
       )}
 
       <div className="mt-4 text-center space-y-2">
-        <Link to="/reset-password" className="text-sm text-cyan-500 hover:underline block">{t('forgot_password')}</Link>
-        <p className="text-sm text-custom-muted">{t('no_account')} <Link to="/signup" className="text-cyan-500 hover:underline">{t('create_account')}</Link></p>
+        <Link to="/reset-password" className="text-sm text-accent hover:underline block">{t('forgot_password')}</Link>
+        <p className="text-sm text-custom-muted">{t('no_account')} <Link to="/signup" className="text-accent hover:underline">{t('create_account')}</Link></p>
       </div>
     </div>
   )

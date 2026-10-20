@@ -143,7 +143,7 @@ export default function FreeWrite() {
   if (!loaded) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+        <div className="spin" />
       </div>
     )
   }
@@ -156,18 +156,18 @@ export default function FreeWrite() {
           {/* Mobile: sessions toggle button */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="md:hidden p-1.5 rounded-lg text-custom hover-bg transition-colors"
+            className="btn btn-ghost btn-sm md:!hidden"
             aria-label="Sessions"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
             </svg>
           </button>
-          <h1 className="text-xl font-bold">{t('free_write')}</h1>
+          <h1 className="display text-xl">{t('free_write')}</h1>
         </div>
         <div className="flex items-center gap-3 text-xs text-custom-muted">
           <span>{wordCount} {wordCount === 1 ? t('fw_word') : t('fw_words')}</span>
-          {saving && <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" title={t('fw_saving')} />}
+          {saving && <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent animate-pulse" title={t('fw_saving')} />}
         </div>
       </div>
 
@@ -183,9 +183,9 @@ export default function FreeWrite() {
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleNew() } }}
               placeholder={t('fw_new_session')}
-              className="flex-1 px-2 py-1.5 rounded-lg border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 min-w-0"
+              className="input input-compact flex-1 min-w-0"
             />
-            <button onClick={handleNew} className="px-2.5 py-1.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 shrink-0" title={t('fw_create')}>
+            <button onClick={handleNew} className="btn btn-primary btn-sm shrink-0" title={t('fw_create')}>
               +
             </button>
           </div>
@@ -196,15 +196,13 @@ export default function FreeWrite() {
               <div className="flex gap-1">
                 <button
                   onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()) }}
-                  className={`flex-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    selectMode ? 'bg-cyan-500 text-white' : 'border border-custom text-custom hover:border-cyan-400'
-                  }`}
+                  className={`btn btn-sm flex-1 ${selectMode ? 'btn-primary' : 'btn-secondary'}`}
                 >
                   {selectMode ? t('fw_cancel') : t('fw_select')}
                 </button>
                 <button
                   onClick={() => handleExportPdf([])}
-                  className="flex-1 px-2 py-1 rounded-lg text-xs font-medium border border-custom text-custom hover:border-cyan-400"
+                  className="btn btn-secondary btn-sm flex-1"
                   title={t('fw_export_all')}
                 >
                   {t('fw_export_all')}
@@ -212,16 +210,16 @@ export default function FreeWrite() {
               </div>
               {selectMode && (
                 <div className="flex gap-1">
-                  <button onClick={selectAll} className="flex-1 px-2 py-1 rounded-lg text-xs text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/20">
+                  <button onClick={selectAll} className="btn btn-secondary btn-sm flex-1">
                     {t('fw_select_all')}
                   </button>
-                  <button onClick={deselectAll} className="flex-1 px-2 py-1 rounded-lg text-xs text-custom-muted hover:bg-custom-secondary">
+                  <button onClick={deselectAll} className="btn btn-ghost btn-sm flex-1">
                     {t('fw_deselect_all')}
                   </button>
                   <button
                     onClick={() => { handleExportPdf([...selectedIds]); setSelectMode(false); setSelectedIds(new Set()) }}
                     disabled={selectedIds.size === 0}
-                    className="flex-1 px-2 py-1 rounded-lg text-xs font-medium bg-cyan-500 text-white hover:bg-cyan-600 disabled:opacity-40"
+                    className="btn btn-primary btn-sm flex-1"
                   >
                     PDF ({selectedIds.size})
                   </button>
@@ -242,10 +240,10 @@ export default function FreeWrite() {
                 className={`group flex items-start gap-1 px-2.5 py-2 rounded-lg cursor-pointer text-sm transition-colors ${
                   selectMode
                     ? selectedIds.has(s.id)
-                      ? 'bg-cyan-100 dark:bg-cyan-900/30 border border-cyan-400'
+                      ? 'bg-accent-soft border border-accent'
                       : 'hover:bg-custom-secondary border border-transparent'
                     : activeId === s.id
-                      ? 'bg-cyan-500 text-white'
+                      ? 'nav-item-active'
                       : 'text-custom hover-bg'
                 }`}
               >
@@ -254,17 +252,13 @@ export default function FreeWrite() {
                     type="checkbox"
                     checked={selectedIds.has(s.id)}
                     onChange={() => toggleSelect(s.id)}
-                    className="mt-1 accent-cyan-500 shrink-0"
+                    className="mt-1 accent-[var(--accent)] shrink-0"
                     onClick={(e) => e.stopPropagation()}
                   />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="truncate font-medium">{s.title}</div>
-                  <div className={`text-xs truncate ${
-                    selectMode
-                      ? 'text-custom-muted'
-                      : activeId === s.id ? 'text-white/70' : 'text-custom-muted'
-                  }`}>
+                  <div className="text-xs truncate text-custom-muted">
                     {s.updated_at ? (() => {
                       const dt = new Date(s.updated_at)
                       const datePart = formatDateStr(dt.toISOString(), dateFormat)
@@ -276,9 +270,7 @@ export default function FreeWrite() {
                 {!selectMode && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(s.id) }}
-                    className={`shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-sm leading-none px-1 rounded ${
-                      activeId === s.id ? 'hover:bg-white/20 text-white/70' : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-red-400'
-                    }`}
+                    className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-sm leading-none px-1 rounded text-[var(--danger)] hover:bg-[var(--danger-soft)]"
                     title={t('fw_delete')}
                   >
                     ×
@@ -290,7 +282,7 @@ export default function FreeWrite() {
         </div>
 
         {/* Editor — full content area */}
-        <div className="flex-1 flex flex-col card-bg border border-custom rounded-xl shadow-sm min-w-0">
+        <div className="card flex-1 flex flex-col min-w-0">
           {activeId ? (
             <>
               <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-custom">
@@ -299,12 +291,12 @@ export default function FreeWrite() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={t('fw_session_title')}
-                  className="flex-1 bg-transparent text-custom font-semibold placeholder-custom-muted/50 outline-none text-base"
+                  className="display flex-1 bg-transparent text-custom font-semibold placeholder-custom-muted/50 outline-none text-base"
                 />
                 {!selectMode && (
                   <button
                     onClick={() => handleExportPdf([activeId])}
-                    className="px-3 py-1 rounded-lg text-xs font-medium border border-custom text-custom hover:border-cyan-400 shrink-0 ml-2"
+                    className="btn btn-secondary btn-sm shrink-0 ml-2"
                     title={t('fw_export_pdf')}
                   >
                     PDF
@@ -349,9 +341,9 @@ export default function FreeWrite() {
                   onChange={(e) => setNewTitle(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleNew() } }}
                   placeholder={t('fw_new_session')}
-                  className="flex-1 px-2 py-1.5 rounded-lg border border-custom bg-custom-secondary text-custom text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 min-w-0"
+                  className="input input-compact flex-1 min-w-0"
                 />
-                <button onClick={() => { handleNew(); setSidebarOpen(false) }} className="px-2.5 py-1.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 shrink-0">
+                <button onClick={() => { handleNew(); setSidebarOpen(false) }} className="btn btn-primary btn-sm shrink-0">
                   +
                 </button>
               </div>
@@ -361,7 +353,7 @@ export default function FreeWrite() {
                 <div className="flex gap-1">
                   <button
                     onClick={() => handleExportPdf([])}
-                    className="flex-1 px-2 py-1.5 rounded-lg text-xs font-medium border border-custom text-custom hover:border-cyan-400"
+                    className="btn btn-secondary btn-sm flex-1"
                   >
                     {t('fw_export_all')}
                   </button>
@@ -379,15 +371,13 @@ export default function FreeWrite() {
                     onClick={() => selectSession(s.id)}
                     className={`flex items-start gap-2 px-3 py-2.5 rounded-lg cursor-pointer text-sm transition-colors ${
                       activeId === s.id
-                        ? 'bg-cyan-500 text-white'
+                        ? 'nav-item-active'
                         : 'text-custom hover-bg'
                     }`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="truncate font-medium">{s.title}</div>
-                      <div className={`text-xs truncate ${
-                        activeId === s.id ? 'text-white/70' : 'text-custom-muted'
-                      }`}>
+                      <div className="text-xs truncate text-custom-muted">
                         {s.updated_at ? (() => {
                           const dt = new Date(s.updated_at)
                           const datePart = formatDateStr(dt.toISOString(), dateFormat)
@@ -398,9 +388,7 @@ export default function FreeWrite() {
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(s.id) }}
-                      className={`shrink-0 text-sm leading-none px-1.5 py-0.5 rounded ${
-                        activeId === s.id ? 'hover:bg-white/20 text-white/70' : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-red-400'
-                      }`}
+                      className="shrink-0 text-sm leading-none px-1.5 py-0.5 rounded text-[var(--danger)] hover:bg-[var(--danger-soft)]"
                     >
                       ×
                     </button>

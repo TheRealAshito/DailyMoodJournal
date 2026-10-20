@@ -51,42 +51,42 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-bold text-center mb-1">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
+    <div className="card w-full max-w-sm px-8 py-9 fade-up">
+      <h1 className="display text-2xl text-center mb-1">{String.fromCodePoint(0x1F4D4)} DailyMood</h1>
       <p className="text-center text-custom-muted mb-6">{t('signup')}</p>
 
-      {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 rounded-lg p-3 mb-4 text-sm">{error}</div>}
+      {error && <div className="rounded-lg border border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)] px-3 py-2.5 mb-4 text-sm">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">{t('username')}</label>
-          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" autoFocus />
+          <label className="form-label">{t('username')}</label>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="input" autoFocus />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('password')}</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+          <label className="form-label">{t('password')}</label>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('confirm_password')}</label>
-          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+          <label className="form-label">{t('confirm_password')}</label>
+          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="input" />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('security_question')}</label>
-          <select value={question} onChange={(e) => setQuestion(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400">
+          <label className="form-label">{t('security_question')}</label>
+          <select value={question} onChange={(e) => setQuestion(e.target.value)} className="input">
             {QUESTIONS.map((q) => <option key={q} value={q}>{q}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">{t('security_answer')}</label>
-          <input type="text" value={answer} onChange={(e) => setAnswer(e.target.value)} className="w-full px-3 py-2 rounded-lg border-custom bg-custom-secondary text-custom focus:outline-none focus:ring-2 focus:ring-cyan-400" />
+          <label className="form-label">{t('security_answer')}</label>
+          <input type="text" value={answer} onChange={(e) => setAnswer(e.target.value)} className="input" />
         </div>
-        <button type="submit" disabled={loading} className="w-full py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-600 transition-colors disabled:opacity-50">
+        <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full">
           {loading ? '...' : t('signup')}
         </button>
       </form>
 
       <p className="mt-4 text-center text-sm text-custom-muted">
-        <Link to="/login" className="text-cyan-500 hover:underline">{t('back_to_login')}</Link>
+        <Link to="/login" className="text-accent hover:underline">{t('back_to_login')}</Link>
       </p>
     </div>
   )
