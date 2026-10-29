@@ -457,5 +457,7 @@
   "help_cbt_11_example": "Getting one question wrong proves I'm bad at math. Getting the other 19 right doesn't mean anything.",
   "clear_filters": "Clear filters",
   "matching_entries": "Matching entries",
-  "custom_scales_title": "Custom Scales"
+  "custom_scales_title": "Custom Scales",
+  "quick_log": "Log now",
+  "quick_logged": "Logged ✓"
 }

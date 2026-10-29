@@ -457,5 +457,7 @@
   "help_cbt_11_example": "Errar uma questão prova que sou ruim em matemática. Acertar as outras 19 não significa nada.",
   "clear_filters": "Limpar filtros",
   "matching_entries": "Entradas correspondentes",
-  "custom_scales_title": "Escalas personalizadas"
+  "custom_scales_title": "Escalas personalizadas",
+  "quick_log": "Registrar agora",
+  "quick_logged": "Registrado ✓"
 }

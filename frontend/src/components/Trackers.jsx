@@ -174,6 +174,7 @@ function CounterCard({ tracker, onChange }) {
   const [mind, setMind] = useState('')
   const [triggers, setTriggers] = useState('')
   const [msg, setMsg] = useState('')
+  const [quickState, setQuickState] = useState('idle')
 
   useEffect(() => {
     setName(tracker.name)
@@ -221,6 +222,22 @@ function CounterCard({ tracker, onChange }) {
     setFeeling('')
     setMind('')
     setTriggers('')
+  }
+
+  async function handleQuickLog() {
+    // One click: record an occurrence stamped with the click time (no form).
+    if (quickState !== 'idle') return
+    setQuickState('saving')
+    setMsg('')
+    try {
+      await api.post(`/trackers/${tracker.id}/events`, {})
+      setQuickState('done')
+      onChange()
+      setTimeout(() => setQuickState('idle'), 2000)
+    } catch (err) {
+      setQuickState('idle')
+      setMsg(errDetail(err) || t('tracker_error'))
+    }
   }
 
   async function handleLog(ev) {
@@ -309,9 +326,14 @@ function CounterCard({ tracker, onChange }) {
         </form>
       )}
 
-      <div className="mt-4">
+      <div className="mt-4 flex flex-wrap gap-2">
         {!showLog ? (
-          <button onClick={() => setShowLog(true)} className={BTN_PRIMARY}>{t('log_occurrence')}</button>
+          <>
+            <button onClick={handleQuickLog} disabled={quickState === 'saving'} className={BTN_PRIMARY}>
+              {quickState === 'done' ? t('quick_logged') : t('quick_log')}
+            </button>
+            <button onClick={() => setShowLog(true)} className={BTN_NEUTRAL}>{t('log_occurrence')}</button>
+          </>
         ) : (
           <form onSubmit={handleLog} className="space-y-3 divider pt-4">
             <div>
