@@ -169,6 +169,25 @@ h1, h2, h3 {
   box-shadow: var(--shadow);
   border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
 }
+/* Selectable card (e.g. map-kind picker). Must come AFTER .card above:
+   both are single-class specificity, so source order wins — .card's border
+   and background would otherwise override the selection utilities. */
+.select-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+.select-card:hover {
+  border-color: var(--accent);
+}
+.select-card.on {
+  border-color: var(--accent);
+  background-color: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent), var(--shadow-sm);
+}
 .card-pad { padding: 1.25rem; }
 
 .section-title {

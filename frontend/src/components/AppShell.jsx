@@ -171,7 +171,7 @@ export default function AppShell({ children }) {
         <StickyNote />
         <NudgeBanner />
 
-        <main key={location.pathname} className="fade-up px-4 pt-5 pb-28 md:px-10 md:pt-8 md:pb-12 max-w-5xl">
+        <main key={location.pathname} className="fade-up px-4 pt-5 pb-28 md:px-10 md:pt-8 md:pb-12 w-full max-w-6xl mx-auto">
           {children}
         </main>
       </div>

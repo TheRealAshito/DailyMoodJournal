@@ -107,7 +107,7 @@ export default function MindMapGallery() {
                 type="button"
                 key={k}
                 onClick={() => setKind(k)}
-                className={`card card-pad text-left cursor-pointer border ${kind === k ? 'border-accent bg-accent-soft' : 'border-custom'}`}
+                className={`select-card card-pad text-left ${kind === k ? 'on' : ''}`}
               >
                 <div className="font-semibold">{kindLabel(k)}</div>
                 <div className="text-sm text-custom-muted mt-1">

@@ -17,7 +17,7 @@ export default function NudgeBanner() {
   if (dismissed || !status || status.has_entry_today) return null
 
   return (
-    <div className="max-w-6xl mx-auto w-full px-4 md:px-0 pt-3">
+    <div className="w-full max-w-6xl mx-auto px-4 pt-3 md:px-10">
       <div className="card flex items-center gap-3 px-4 py-3 !bg-[var(--accent-soft)]">
         <p className="flex-1 text-sm text-custom leading-relaxed">
           {status.streak_at_risk
