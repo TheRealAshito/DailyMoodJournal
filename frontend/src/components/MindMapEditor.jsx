@@ -349,6 +349,17 @@ export default function MindMapEditor() {
     setChildOpen(false)
   }
 
+  const openAddNode = () => {
+    if (!map || !(map.nodes || []).length) return
+    const root = (map.nodes || []).find((n) => !n.parent)
+    const parent = (map.nodes || []).find((n) => n.id === selectedId) || root
+    if (!parent) return
+    setSelectedId(parent.id)
+    setRenameDraft(parent.label)
+    setChildOpen(true)
+    setChildLabel('')
+  }
+
   const deleteNode = () => {
     if (!selectedId) return
     if (!window.confirm(t('mindmap_delete_confirm'))) return
@@ -542,7 +553,12 @@ export default function MindMapEditor() {
             : saveState === 'saved' ? t('mindmap_saved')
               : saveState === 'error' ? t('mindmap_save_error') : ''}
         </span>
-        <div className="relative ml-auto">
+        {!isEmpty && (
+          <button className="btn btn-primary btn-sm ml-auto" onClick={openAddNode}>
+            + {t('mindmap_add_node')}
+          </button>
+        )}
+        <div className={`relative ${isEmpty ? 'ml-auto' : ''}`}>
           <button className="btn btn-secondary btn-sm" onClick={() => setExportOpen((v) => !v)}>
             {t('mindmap_export')}
           </button>
@@ -743,6 +759,13 @@ export default function MindMapEditor() {
           </div>
         )}
 
+        {/* discoverability hint: nothing selected but the map has nodes */}
+        {!isEmpty && !selectedId && (
+          <div className="absolute left-3 top-3 z-10 text-xs text-custom-muted bg-white/80 rounded-lg px-2.5 py-1.5">
+            {t('mindmap_select_node')}
+          </div>
+        )}
+
         {/* root creation for empty maps */}
         {isEmpty && (
           <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
@@ -837,6 +860,9 @@ export default function MindMapEditor() {
 
             {childOpen && (
               <div className="flex items-center gap-2 mt-2">
+                {map.kind === 'radial' && selectedNode ? (
+                  <span className="badge shrink-0">→ T{selectedNode.tier + 1}</span>
+                ) : null}
                 <input
                   className="input input-compact flex-1 min-w-0"
                   value={childLabel}

@@ -496,6 +496,7 @@
   "mindmap_child_placeholder": "New idea…",
   "mindmap_root_placeholder": "Your core idea…",
   "mindmap_add": "Add",
+  "mindmap_add_node": "Add node",
   "mindmap_relation_label": "Relation label (optional)",
   "mindmap_relation_add": "Connect",
   "mindmap_relation_error": "These two nodes are already connected.",

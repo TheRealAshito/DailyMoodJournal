@@ -496,6 +496,7 @@
   "mindmap_child_placeholder": "Nova ideia…",
   "mindmap_root_placeholder": "Sua ideia central…",
   "mindmap_add": "Adicionar",
+  "mindmap_add_node": "Adicionar nó",
   "mindmap_relation_label": "Rótulo da relação (opcional)",
   "mindmap_relation_add": "Conectar",
   "mindmap_relation_error": "Estes dois nós já estão conectados.",
