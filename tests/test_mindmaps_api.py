@@ -129,6 +129,17 @@ class TestPdfExport:
         # assert a valid non-trivial PDF came back)
         assert len(r.content) > 2000
 
+    def test_export_circle_nodes(self, client):
+        """Mindly-style payload: shape='circle' with r/text_color draws fine."""
+        _signup(client)
+        m = client.post("/api/mindmaps", json={"title": "Mindly", "kind": "radial"}).json()
+        layout = _layout()
+        for n in layout["nodes"]:
+            n.update({"shape": "circle", "r": n["w"] / 2, "text_color": "#ffffff"})
+        r = client.post(f"/api/mindmaps/{m['id']}/export/pdf", json={"layout": layout})
+        assert r.status_code == 200
+        assert r.content[:5] == b"%PDF-"
+
     def test_export_requires_auth(self, client):
         r = client.post("/api/mindmaps/x/export/pdf", json={"layout": _layout()})
         assert r.status_code == 401

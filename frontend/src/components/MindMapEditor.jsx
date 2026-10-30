@@ -125,15 +125,26 @@ function buildExportSvg(map, layout) {
     p.push(`<text x="${m.x}" y="${m.y}" font-size="10" fill="#8a7b6d" text-anchor="middle" font-family="sans-serif" stroke="#ffffff" stroke-width="3" paint-order="stroke">${xmlEscape(l.label)}</text>`)
   }
   for (const n of layout.nodes || []) {
-    p.push(`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="10" fill="${tint(n.color)}" stroke="${n.color}" stroke-width="2"/>`)
-    n.lines.forEach((line, i) => {
-      const y = n.y + n.h / 2 + (i - (n.lines.length - 1) / 2) * 18 + 4.7
-      p.push(`<text x="${n.x + n.w / 2}" y="${y}" font-size="13" fill="#2b2420" text-anchor="middle" font-family="sans-serif">${xmlEscape(line)}</text>`)
-    })
+    if (n.shape === 'circle') {
+      // Mindly style: flat circle, no stroke, centered text in contrast color
+      const fs = n.fs || Math.max(9, Math.min(18, Math.round(n.r * 0.38)))
+      p.push(`<circle cx="${n.x + n.r}" cy="${n.y + n.r}" r="${n.r}" fill="${n.color}"/>`)
+      n.lines.forEach((line, i) => {
+        const y = n.y + n.r + (i - (n.lines.length - 1) / 2) * fs * 1.32
+        p.push(`<text x="${n.x + n.r}" y="${y}" font-size="${fs}" fill="${n.text_color || '#ffffff'}" text-anchor="middle" font-family="sans-serif">${xmlEscape(line)}</text>`)
+      })
+    } else {
+      p.push(`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="10" fill="${tint(n.color)}" stroke="${n.color}" stroke-width="2"/>`)
+      n.lines.forEach((line, i) => {
+        const y = n.y + n.h / 2 + (i - (n.lines.length - 1) / 2) * 18 + 4.7
+        p.push(`<text x="${n.x + n.w / 2}" y="${y}" font-size="13" fill="#2b2420" text-anchor="middle" font-family="sans-serif">${xmlEscape(line)}</text>`)
+      })
+    }
   }
-  // tier legend, top-right corner
+  // tier legend, top-right corner (classic mind maps only — Mindly radial
+  // carries its hierarchy in size and shade, no legend)
   const maxTier = (layout.nodes || []).reduce((s, n) => Math.max(s, n.tier), 0)
-  if ((layout.nodes || []).length) {
+  if ((layout.nodes || []).length && map.kind !== 'radial') {
     const lw = 78
     const lx = W - lw - 12
     const ly = 12
@@ -643,9 +654,20 @@ export default function MindMapEditor() {
           {/* nodes */}
           {layout.nodes.map((n) => {
             const selected = n.id === selectedId
+            const isCircle = n.shape === 'circle'
             return (
               <g key={n.id} style={{ cursor: 'pointer' }} onClick={() => onNodeClick(n.id)}>
-                {selected && (
+                {selected && (isCircle ? (
+                  <circle
+                    cx={n.x + n.r}
+                    cy={n.y + n.r}
+                    r={n.r + 4}
+                    fill="none"
+                    stroke={n.color}
+                    strokeOpacity={0.35}
+                    strokeWidth={2}
+                  />
+                ) : (
                   <rect
                     x={n.x - 4}
                     y={n.y - 4}
@@ -657,24 +679,30 @@ export default function MindMapEditor() {
                     strokeOpacity={0.35}
                     strokeWidth={2}
                   />
+                ))}
+                {isCircle ? (
+                  <circle cx={n.x + n.r} cy={n.y + n.r} r={n.r} fill={n.color} />
+                ) : (
+                  <rect
+                    x={n.x}
+                    y={n.y}
+                    width={n.w}
+                    height={n.h}
+                    rx={10}
+                    fill={tint(n.color)}
+                    stroke={n.color}
+                    strokeWidth={selected ? 3 : 2}
+                  />
                 )}
-                <rect
-                  x={n.x}
-                  y={n.y}
-                  width={n.w}
-                  height={n.h}
-                  rx={10}
-                  fill={tint(n.color)}
-                  stroke={n.color}
-                  strokeWidth={selected ? 3 : 2}
-                />
                 {n.lines.map((line, i) => (
                   <text
                     key={i}
                     x={n.x + n.w / 2}
-                    y={n.y + n.h / 2 + (i - (n.lines.length - 1) / 2) * 18 + 4.7}
-                    fontSize={13}
-                    fill="#2b2420"
+                    y={isCircle
+                      ? n.y + n.r + (i - (n.lines.length - 1) / 2) * (n.fs || 12) * 1.32
+                      : n.y + n.h / 2 + (i - (n.lines.length - 1) / 2) * 18 + 4.7}
+                    fontSize={isCircle ? (n.fs || 12) : 13}
+                    fill={isCircle ? (n.text_color || '#ffffff') : '#2b2420'}
                     textAnchor="middle"
                   >
                     {line}
@@ -685,8 +713,9 @@ export default function MindMapEditor() {
           })}
         </svg>
 
-        {/* tier legend */}
-        {!isEmpty && (
+        {/* tier legend — classic mind maps only; radial carries hierarchy in
+            size and shade, Mindly-style */}
+        {!isEmpty && map.kind !== 'radial' && (
           <div className="absolute top-2 right-2 z-20 card p-2">
             <div className="flex flex-col gap-1">
               {Array.from({ length: maxTier + 1 }, (_, tier) => (
