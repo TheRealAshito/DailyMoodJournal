@@ -13,6 +13,8 @@ import Calendar from './components/Calendar'
 import EntryForm from './components/EntryForm'
 import Insights from './components/Insights'
 import Trackers from './components/Trackers'
+import MindMapGallery from './components/MindMapGallery'
+import MindMapEditor from './components/MindMapEditor'
 import Settings from './components/Settings'
 import Help from './components/Help'
 import FreeWrite from './components/FreeWrite'
@@ -26,6 +28,8 @@ function ProtectedLayout() {
         <Route path="edit/:encodedPath" element={<EntryForm />} />
         <Route path="insights" element={<Insights />} />
         <Route path="trackers" element={<Trackers />} />
+        <Route path="maps" element={<MindMapGallery />} />
+        <Route path="maps/:id" element={<MindMapEditor />} />
         <Route path="settings" element={<Settings />} />
         <Route path="freewrite" element={<FreeWrite />} />
         <Route path="help" element={<Help />} />

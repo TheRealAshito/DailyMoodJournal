@@ -48,6 +48,12 @@ PDF_LANG = {
         "tags": "Tags",
         "unknown": "Unknown",
         "date_fmt": "%d/%m/%Y %H:%M",
+        # Mind map PDF
+        "map_kind_mindmap": "Mind map",
+        "map_kind_radial": "Circle map",
+        "map_nodes": "Nodes",
+        "map_links": "Relations",
+        "map_tier": "Tier",
         "labels": ["Terrible", "Bad", "Poor", "Okay", "Good", "Great", "Amazing"],
         # Stats PDF
         "stats_suffix": "Statistics",
@@ -80,6 +86,12 @@ PDF_LANG = {
         "tags": "Tags",
         "unknown": "Desconhecido",
         "date_fmt": "%d/%m/%Y %H:%M",
+        # Mind map PDF
+        "map_kind_mindmap": "Mapa mental",
+        "map_kind_radial": "Mapa circular",
+        "map_nodes": "Nós",
+        "map_links": "Relações",
+        "map_tier": "Nível",
         "labels": ["Péssimo", "Ruim", "Fraco", "Neutro", "Bom", "Ótimo", "Incrível"],
         # Stats PDF
         "stats_suffix": "Estatísticas",
