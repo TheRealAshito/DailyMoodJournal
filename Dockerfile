@@ -8,7 +8,12 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends gcc fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
+# Runtime deps: only fonts for PDF export (DejaVuSans via fpdf2). No C
+# toolchain on purpose — every pip dependency ships prebuilt manylinux
+# wheels for this image, so gcc/binutils/cpp (~150MB of apt downloads) are
+# pure dead weight and a build-stall risk on slow mirrors. If a future
+# dependency ever needs compiling from source, re-add `gcc` here.
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
