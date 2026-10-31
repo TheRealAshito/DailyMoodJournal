@@ -436,10 +436,12 @@ export default function MindMapEditor() {
       vb: { ...vbActual },
       rect: el.getBoundingClientRect(),
       moved: false,
+      pointerId: e.pointerId,
     }
     dragMovedRef.current = false
-    setPanning(true)
-    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* noop */ }
+    // NOTE: no setPointerCapture here — capturing on pointerdown retargets
+    // the browser's click event to the SVG, so node onClick never fires.
+    // Capture happens on the first real move instead (pan start).
   }
 
   const onPointerMove = (e) => {
@@ -447,9 +449,11 @@ export default function MindMapEditor() {
     if (!d) return
     const dx = e.clientX - d.x
     const dy = e.clientY - d.y
-    if (!d.moved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+    if (!d.moved && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
       d.moved = true
       dragMovedRef.current = true
+      setPanning(true)
+      try { e.currentTarget.setPointerCapture(d.pointerId) } catch { /* noop */ }
     }
     if (!d.moved) return
     const k = Math.max(d.vb.w / (d.rect.width || 1), d.vb.h / (d.rect.height || 1))
