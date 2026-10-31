@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:20-slim AS frontend-build
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json* ./
@@ -8,15 +9,17 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
-# Runtime deps: only fonts for PDF export (DejaVuSans via fpdf2). No C
-# toolchain on purpose — every pip dependency ships prebuilt manylinux
-# wheels for this image, so gcc/binutils/cpp (~150MB of apt downloads) are
-# pure dead weight and a build-stall risk on slow mirrors. If a future
-# dependency ever needs compiling from source, re-add `gcc` here.
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
+# No apt packages at all: the PDF font ships in-repo at
+# backend/fonts/DejaVuSans.ttf (export_import prefers it over the system
+# font) and every pip dependency publishes prebuilt manylinux wheels for
+# this image (verified via pip download --only-binary=:all: for cp311 /
+# manylinux2014_x86_64 — including all transitives). The old apt line
+# (gcc toolchain, then fonts) only ever stalled builds on slow mirrors.
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# cache mount: interrupted builds resume from already-fetched wheels
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 COPY backend/ ./backend/
 COPY --from=frontend-build /frontend/dist ./frontend/dist/

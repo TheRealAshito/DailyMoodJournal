@@ -9,7 +9,8 @@ venv/
 .streamlit/
 node_modules/
 package-lock.json
-backend/fonts/*.ttf
+# NOTE: backend/fonts/DejaVuSans.ttf is VENDORED on purpose (PDF export
+# needs it in the Docker image) — never ignore it again.
 goal.md
 frontend/dist/
 

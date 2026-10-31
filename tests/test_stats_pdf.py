@@ -1,12 +1,18 @@
-"""Tests for backend.stats_pdf — stats PDF generation with labeled charts."""
+"""Tests for backend.stats_pdf — stats PDF generation with vector charts.
+
+Charts draw native PDF primitives via fpdf2 (no matplotlib / PNG). The
+chart functions draw onto an FPDF at (x, y) and return the height they
+consumed in mm (0 when there is no data).
+"""
 
 from backend.stats_pdf import (
     build_stats_pdf,
-    _make_mood_time_chart,
-    _make_mood_distribution_chart,
-    _make_day_of_week_chart,
-    _make_tag_chart,
-    _make_custom_scale_chart,
+    _init_stats_pdf,
+    _draw_mood_time,
+    _draw_mood_distribution,
+    _draw_day_of_week,
+    _draw_tag,
+    _draw_custom_scale,
 )
 from backend.export_import import PDF_LANG
 
@@ -61,37 +67,59 @@ SAMPLE_STATS = {
 }
 
 
-class TestChartGeneration:
-    def test_mood_time_chart_returns_png(self):
-        buf = _make_mood_time_chart(SAMPLE_STATS["mood_by_date"], LANG)
-        assert buf is not None
-        assert buf.read(4) == b"\x89PNG"
+def _draw(fn, data, *extra):
+    """Draw one chart onto a fresh PDF; returns (height_used, pdf_bytes)."""
+    pdf = _init_stats_pdf()
+    pdf.add_page()
+    h = fn(pdf, 10, 30, 190, data, LANG, *extra)
+    return h, bytes(pdf.output(dest="S"))
+
+
+class TestChartDrawing:
+    def test_mood_time_chart_draws(self):
+        h, raw = _draw(_draw_mood_time, SAMPLE_STATS["mood_by_date"])
+        assert h > 0
+        assert raw[:4] == b"%PDF"
 
     def test_mood_time_chart_empty_data(self):
-        assert _make_mood_time_chart([], LANG) is None
+        h, _ = _draw(_draw_mood_time, [])
+        assert h == 0
 
     def test_mood_distribution_chart(self):
-        buf = _make_mood_distribution_chart(SAMPLE_STATS["mood_distribution"], LANG)
-        assert buf is not None
-        assert buf.read(4) == b"\x89PNG"
+        h, raw = _draw(_draw_mood_distribution, SAMPLE_STATS["mood_distribution"])
+        assert h > 0
+        assert raw[:4] == b"%PDF"
 
     def test_day_of_week_chart(self):
-        buf = _make_day_of_week_chart(SAMPLE_STATS["day_of_week_mood"], LANG)
-        assert buf is not None
-        assert buf.read(4) == b"\x89PNG"
+        h, raw = _draw(_draw_day_of_week, SAMPLE_STATS["day_of_week_mood"])
+        assert h > 0
+        assert raw[:4] == b"%PDF"
 
     def test_tag_chart(self):
-        buf = _make_tag_chart(SAMPLE_STATS["tag_mood_correlation"], LANG)
-        assert buf is not None
-        assert buf.read(4) == b"\x89PNG"
+        h, raw = _draw(_draw_tag, SAMPLE_STATS["tag_mood_correlation"])
+        assert h > 0
+        assert raw[:4] == b"%PDF"
 
     def test_tag_chart_empty(self):
-        assert _make_tag_chart([], LANG) is None
+        h, _ = _draw(_draw_tag, [])
+        assert h == 0
 
     def test_custom_scale_chart(self):
-        buf = _make_custom_scale_chart("Anxiety", SAMPLE_STATS["scales_by_date"]["Anxiety"], LANG)
-        assert buf is not None
-        assert buf.read(4) == b"\x89PNG"
+        h, raw = _draw(_draw_custom_scale, SAMPLE_STATS["scales_by_date"]["Anxiety"], "Anxiety")
+        assert h > 0
+        assert raw[:4] == b"%PDF"
+
+    def test_many_bars_do_not_overflow(self):
+        data = [{"label": f"D{i}", "avg_mood": i % 7, "count": 1} for i in range(60)]
+        h, raw = _draw(_draw_mood_time, data)
+        assert h > 0
+        assert raw[:4] == b"%PDF"
+
+    def test_hbars_scale_to_top_tags(self):
+        data = [{"tag": f"tag{i}", "avg_mood": i % 7, "count": i} for i in range(25)]
+        h, _ = _draw(_draw_tag, data)
+        # top 10 rows only
+        assert h == 10 * 5.5 + 18.0
 
 
 class TestStatsPDF:
@@ -112,14 +140,12 @@ class TestStatsPDF:
         data = build_stats_pdf("alice", SAMPLE_STATS)
         assert data is not None
         assert data[:4] == b"%PDF"
-        # PDF is compressed so we can't search for plain text
-        # Just verify it's a reasonable size (has content)
-        assert len(data) > 5000  # Should have charts embedded
+        # font embedded + charts drawn as vectors -> solid document
+        assert len(data) > 5000
 
     def test_build_stats_pdf_with_custom_scales(self):
         data = build_stats_pdf("alice", SAMPLE_STATS)
         assert data is not None
-        # Should have multiple pages (charts)
         assert data[:4] == b"%PDF"
 
     def test_build_stats_pdf_no_charts(self):
