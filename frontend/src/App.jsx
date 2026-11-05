@@ -15,6 +15,7 @@ import Insights from './components/Insights'
 import Trackers from './components/Trackers'
 import MindMapGallery from './components/MindMapGallery'
 import MindMapEditor from './components/MindMapEditor'
+import Relaxation from './components/Relaxation'
 import Settings from './components/Settings'
 import Help from './components/Help'
 import FreeWrite from './components/FreeWrite'
@@ -30,6 +31,7 @@ function ProtectedLayout() {
         <Route path="trackers" element={<Trackers />} />
         <Route path="maps" element={<MindMapGallery />} />
         <Route path="maps/:id" element={<MindMapEditor />} />
+        <Route path="relax" element={<Relaxation />} />
         <Route path="settings" element={<Settings />} />
         <Route path="freewrite" element={<FreeWrite />} />
         <Route path="help" element={<Help />} />

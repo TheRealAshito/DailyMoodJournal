@@ -14,6 +14,7 @@ const ICONS = {
   notebook: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 3v18M12 8h4M12 12h4" /></>,
   chart: <><path d="M4 20V10M10 20V4M16 20v-7M21 20H3" /></>,
   map: <><circle cx="12" cy="5" r="2.5" /><circle cx="6" cy="19" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path d="M10.9 7.2 7.2 16.7M13.1 7.2l3.7 9.5" /></>,
+  leaf: <><path d="M5 21c0-9 5-15 14-16 1 9-4 16-14 16z" /><path d="M5 21c3-5 6-8 9-10" /></>,
   target: <><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="0.8" fill="currentColor" /></>,
   help: <><circle cx="12" cy="12" r="9" /><path d="M9.4 9a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.4-2.6 3.6" /><circle cx="12" cy="17" r="0.8" fill="currentColor" /></>,
   settings: <><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.06-.4.1-.8.1-1.2z" /></>,
@@ -43,6 +44,9 @@ const NAV_SECONDARY = [
   { to: '/insights', icon: 'chart', key: 'insights' },
   { to: '/trackers', icon: 'target', key: 'trackers' },
   { to: '/maps', icon: 'map', key: 'mindmap_title' },
+]
+const NAV_UNWIND = [
+  { to: '/relax', icon: 'leaf', key: 'relax_title' },
 ]
 const NAV_FOOTER = [
   { to: '/help', icon: 'help', key: 'help' },
@@ -109,6 +113,10 @@ export default function AppShell({ children }) {
             {t('nav_section_insights')}
           </div>
           {items(NAV_SECONDARY)}
+          <div className="pt-4 pb-1 px-2 text-[10.5px] font-semibold uppercase tracking-widest text-custom-muted">
+            {t('unwind')}
+          </div>
+          {items(NAV_UNWIND)}
           <div className="pt-4 pb-1 px-2 text-[10.5px] font-semibold uppercase tracking-widest text-custom-muted">
             {t('nav_section_support')}
           </div>
@@ -208,7 +216,7 @@ export default function AppShell({ children }) {
               <div className="w-9 h-1.5 rounded-full" style={{ background: 'var(--border)' }} />
             </div>
             <div className="px-3 pb-6 pt-2 space-y-1">
-              {items([NAV_PRIMARY[2], NAV_SECONDARY[2]], () => setMenuOpen(false))}
+              {items([NAV_PRIMARY[2], NAV_SECONDARY[2], NAV_UNWIND[0]], () => setMenuOpen(false))}
               <div className="divider my-2" />
               {items(NAV_FOOTER, () => setMenuOpen(false))}
               <button onClick={() => { toggleTheme(); setMenuOpen(false) }} className="nav-item w-full">
